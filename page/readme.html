@@ -1,0 +1,157 @@
+<h1 id="foreword">Foreword</h1>
+<p>This project is in beta and has limitations so I&#39;d advise keeping an eye on the browser&#39;s developer console.<br>If you wish this project reach its full potential please support us on <a href="https://porchetta.industries">Porchetta Industries</a>.<br>In
+    case you already do, check the &quot;For subscribers&quot; section in this readme for additional goodies.</p>
+<h1 id="how-it-works">How it works</h1>
+<p>Opening the webpage will download a python interpreter (pyodide) bundled with pentest tools check out the features Yes, all these tools will be running inside of your browser and not reaching out to the internet. This static website can be hosted locally
+    as well, not necessary to access it on the internet but this page will always ship the new updates when the underlying python libraries get an update.<br>Most of these tools will require network access to the system, which (for obvious security reasons)
+    the browser does not provide, hence a proxy application must be used. At this point we differentiate between subscribers and non-subscribers for Porchetta industries.</p>
+<h2 id="for-subscribers">For subscribers</h2>
+<p>You will get the following</p>
+<ul>
+    <li>The proxy in three languages including source+compiled version
+        <ul>
+            <li><a href="https://gitlab.porchetta.industries/Skelsec/wsnetnim">Nim</a> - Native on many platforms, on Windows it compiles easily to DLL</li>
+            <li><a href="https://gitlab.porchetta.industries/Skelsec/wsnetframework">DOTNET</a> - Using .NET Framework, but supports .NET Core and Standard</li>
+            <li><a href="https://github.com/skelsec/wsnet">Python</a> - Contains both client and server code</li>
+        </ul>
+    </li>
+    <li>The website source code <a href="https://gitlab.porchetta.industries/Skelsec/octopwnweb">here</a></li>
+    <li>Build environment for the pyodide core so you can rebuild everything yourself. Coming as soon as I can clear up the code</li>
+</ul>
+<h2 id="non-subscribers">Non-subscribers</h2>
+<ul>
+    <li>You can use the Python version downloadable here <a href="https://github.com/skelsec/wsnet/">wsnet</a></li>
+    <li>I includied a compiled version as well for Windows 10 (64 bit)</li>
+</ul>
+<h1 id="features">Features</h1>
+<ul>
+    <li>Pentest tools in your browser</li>
+    <li>Updates shipped by hitting F5. </li>
+    <li>We do the packaging for you.</li>
+    <li>The proxy binary rarely changes, reducing the need to replace existing deployments. (wink)</li>
+    <li>SMB client</li>
+    <li>LDAP client</li>
+    <li>Kerberos client</li>
+    <li>RDP client</li>
+    <li>VNC client</li>
+    <li>NetCat (raw TCP) client</li>
+    <li>Scanners scanners scanners
+        <ul>
+            <li>smb finger</li>
+            <li>smb share enum</li>
+            <li>smb interface enum</li>
+            <li>smb session enum</li>
+            <li>smb printnightmare enum (if I have time to add it)</li>
+        </ul>
+    </li>
+    <li>built-in socks proxy chaining on top of the client-side proxy</li>
+    <li>pypykatz
+        <ul>
+            <li>lsass</li>
+            <li>registry</li>
+            <li>ntds.dit file parsing</li>
+            <li>other decryptors</li>
+        </ul>
+    </li>
+    <li>dpapi decryptor (including wifi and chrome)</li>
+    <li>other utilities I forgot to add</li>
+    <li>interface allows </li>
+    <li>it does logging and you can save/reload sessions</li>
+    <li>no wiki nor tutorials whatsoever, 0 test cases</li>
+</ul>
+<h1 id="usage">Usage</h1>
+<h2 id="startup-steps">Startup steps</h2>
+<ol>
+    <li>Read readme (recommended)</li>
+    <li>Start your proxy app on localhost (optional). Without a working proxy only the file parsers and basic utils will work.</li>
+    <li>Verify that proxy URL is pointing to the proxy. (optional)</li>
+    <li>Click on the START button to load Pyodide framework -it might take a few 10s of seconds-.</li>
+    <li>Type &#39;?&#39; for help.</li>
+</ol>
+<h2 id="usage-after-startup-">Usage -after startup-</h2>
+<p>There are 3 major categories of tools you can use in this framework: <code>Clients</code> <code>Scanners</code> <code>Utils</code><br>To use the clients and scanners you MUST add at least one Credential and one Target, optionally a proxy and a proxychain.<br>IMPORTANT:
+    Every time a proxy can be supplied, the default WSNET proxy must be supplied, or a proxychain that has the WSNET proxy as the first in the chain.</p>
+<ul>
+    <li>Credentials
+        <ul>
+            <li><code>addcred</code> aliased <code>ac</code> command. Example: <code>ac TEST\\\\victim Passw0rd!</code></li>
+            <li><code>delcred</code> command. Example: <code>delcred 0</code> Removes the credential ID <code>0</code></li>
+        </ul>
+    </li>
+    <li>Targets
+        <ul>
+            <li><code>addtarget</code> aliased <code>at</code>. Example: <code>at 10.10.10.2</code></li>
+            <li><code>deltarget</code> Example: <code>deltarget 0</code> Removes target ID <code>0</code></li>
+        </ul>
+    </li>
+    <li>Proxy
+        <ul>
+            <li><code>addproxy</code> aliased <code>ap</code>. Example: <code>ap socks5 127.0.0.1 1080</code> Adds a SOCKS5 proxy</li>
+        </ul>
+    </li>
+    <li>Proxychain<br>Allows you to chain multiple proxyies together. You must have proxies defined first, then create an empty chain, then add proxies to the chain
+        <ul>
+            <li><code>createchain</code> Example: <code>createchain</code> Creates an empty chain</li>
+            <li><code>addproxychain</code> Example: <code>addproxychain 0 5</code> Adds proxy ID <code>5</code> to proxychain ID <code>0</code></li>
+        </ul>
+    </li>
+    <li>Clients To use a client you must first add at least one Credential, one Target and optionally one Proxy. Currently the following clients supported: SMB/LDAP/KERBEROS
+        <ul>
+            <li><code>createclient</code> aliased <code>cc</code>. Will spawn a new tab. Example: <code>cc SMB NTLM 4 5 6</code> Creates SMB client with NTLM authentication using credential <code>4</code> target <code>5</code> proxy/proxychain <code>6</code></li>
+        </ul>
+    </li>
+    <li>Scanner Please don&#39;t make me document this. there is a help menu. command structure is similar to that of metasploit </li>
+    <li>Utils Utils do not need any parameters and can be used without a proxy. They can be created with the <code>createutil</code> aliased <code>cu</code> command. Example: <code>cu pypykatz</code>
+        <ul>
+            <li>PYPYKATZ LSASS/Registry/ntds.dit parsing and other tools. It gets automatically started, but you can create more. Example: <code>cu pypykatz</code></li>
+            <li>DPAPI DPAPI secrets decryption. Example: <code>cu dpapi</code></li>
+        </ul>
+    </li>
+</ul>
+<h2 id="hints">Hints</h2>
+<ul>
+    <li>FILES tab
+        <ul>
+            <li>Uploaded files are stored in-memory, and will disappear when reloading this page.</li>
+            <li>Stored files can be accessed by the built-in utilities using the <code>/volatile</code> mount path.</li>
+            <li>The max size of the /volatile mount point depends on your RAM</li>
+            <li>The <code>/static</code> mount point is backed by the non-volatile LocalStorage</li>
+            <li>The size of <code>/static</code> depends on your browser settings (it&#39;s a few Mb by default)</li>
+            <li>Sometimes you&#39;d need to click REFRESH it manually.</li>
+        </ul>
+    </li>
+    <li>CREDENTIALS tab
+        <ul>
+            <li>Lists stored credentials which can be used in all clients and scanners</li>
+            <li>Special characters like <code>\\</code> must be escaped with <code>\\</code></li>
+            <li>Currently they are displayed in a truncated format, don&#39;t be afraid of not seeing the middle part</li>
+        </ul>
+    </li>
+    <li>Octopwn web framework
+        <ul>
+            <li>It runs in your browser. No data should go in/out to the internet after loading.</li>
+            <li>Consists of static files only and can be easily hosted on-perm as well.</li>
+            <li>The tabs in this layout are dynamic. Hold click on tab name and move it around.</li>
+            <li>The default Pyodide console (python console) can be accessed at <code>/console.html</code></li>
+        </ul>
+    </li>
+    <li>About browsers
+        <ul>
+            <li>For some reason the framework runs on Chrome much faster than others</li>
+            <li>Functionalities were tested on FireFox</li>
+        </ul>
+    </li>
+</ul>
+<h1 id="known-limitations">Known limitations</h1>
+<ol>
+    <li>Yes, we are searching for someone who speaks HTML/JS and can make the website looking better :)</li>
+    <li>File-related operations are provided by BrowserFS. This means you have many backend options, but all of them come with certain limitations.<br>If using memory-backed filesystem then you loose your data when reloading the page. if you are using localstorage
+        backed fs, you will run into out-of-diskspace errors.</li>
+    <li>Operations are generally slower (due to the many layers of virtualizations) and browser might hang during extreme cases (see next point)</li>
+    <li>Pyodide has an issue where reloading the page many times causes out-of-memory error. (crashing the browser even)</li>
+</ol>
+<h1 id="kudos">Kudos</h1>
+<ul>
+    <li>The entire Pyodide dev team. This project couldn&#39;t exist without you.</li>
+    <li>Supporters on Porchetta.</li>
+</ul>

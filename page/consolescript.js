@@ -1,0 +1,154 @@
+// python packages to load. You must list all necessary packages
+const pythonPackages = [
+    'cffi', 'openssl', 'ssl', 'arc4', 'certifi', 'lxml', 'xmljson', 'pyndiff',
+    'pillow', 'bitstruct', 'pyparsing', 'diskcache', 'asn1tools', 'asn1crypto',
+    'wcwidth', 'asysocks', 'oscrypto', 'csrbuilder', 'pyperclip', 'winacl',
+    'tqdm', 'minikerberos', 'prompt-toolkit', 'aiosmb', 'msldap', 'wsnet',
+    'websockets', 'pypykatz', 'aardwolf', 'networkx', 'pytz', 'jackdaw', 'octopwn'
+];
+
+
+// this function is to fetch the luncher python code from a file
+// allowing editing the python code in a separate python file insted of
+// merging it here to JS code
+const fetchPyCode = (path) => fetch(`${window.location.origin}/${path}`).then(async res => {
+    const txt = await res.text();
+    return txt;
+});
+
+// loads python packages and executes the luncher python code
+// also sets up the command input interface (runCmd)
+const loadPackages = (pyodide) => {
+    loadingScreenMessage('Loading 3rd party python packages...');
+    pyodide.loadPackage(pythonPackages).then(async() => {
+        loadingScreenMessage('All Packages loaded!');
+        loadingScreenMessage('Fetching OctoPwn bootstrap script...');
+        const pyCode = await fetchPyCode('console.py');
+
+        loadingScreenMessage("Initializing GUI...");
+        initializeGUI();
+        loadingScreenMessage("Setting up file drop area...");
+        setupFileDrop("file-drop-area");
+        loadingScreenMessage('Starting Python console...');
+        startPythonConsole("#pyConsoleDiv", pyodide);
+
+        loadingScreenMessage('Bootstrapping OctoPwn (this might take a while)...');
+        pyodide.runPythonAsync(pyCode).then(() => {
+            loadingScreenMessage('OctoPwn bootstrapped OK!');
+            //document.getElementById("statusButton").value = "RUNNING OK";
+            //starting auto file refresh
+            loadingScreenMessage('Refreshing file list...');
+            autoRefreshFileList();
+
+            loadingScreenMessage('Setting up JS<==>Py proxy functions...');
+            runCmd = async(command, clientid) => {
+                let app = pyodide.globals.get('octopwnApp');
+                app.input_handler(command, clientid);
+                app.destroy();
+
+            }
+            octopwnAddTarget = async(ip, port, dcip, realm, hostname) => {
+                let app = pyodide.globals.get('octopwnApp');
+                await app.do_addtarget(ip, port, dcip, realm, hostname);
+                app.destroy();
+            }
+
+            octopwnAddCredential = async(username_with_domain, secret, secrettype, certfile, keyfile) => {
+                let app = pyodide.globals.get('octopwnApp');
+                await app.do_addcred(username_with_domain, secret, secrettype, certfile, keyfile);
+                app.destroy();
+            }
+
+            octopwnAddProxy = async(ptype, ip, port, agentid, username, password) => {
+                let app = pyodide.globals.get('octopwnApp');
+                await app.do_addproxy(ptype, ip, port, agentid);
+                app.destroy();
+            }
+
+            octopwnCreateClient = async(ctype, cauth, cid, tid, pid) => {
+                let app = pyodide.globals.get('octopwnApp');
+                await app.do_createclient(ctype, cauth, cid, tid, pid)
+                app.destroy();
+            }
+
+            octopwnCreateScanner = async(stype) => {
+                let app = pyodide.globals.get('octopwnApp');
+                await app.do_createscanner(stype)
+                app.destroy();
+            }
+
+            octopwnCreateServer = async(stype) => {
+                let app = pyodide.globals.get('octopwnApp');
+                await app.do_createserver(stype)
+                app.destroy();
+            }
+
+            octopwnCreateUtil = async(stype) => {
+                let app = pyodide.globals.get('octopwnApp');
+                await app.do_createutil(stype)
+                app.destroy();
+            }
+
+            loadingScreenMessage('Everything is loaded and running OK!');
+            stopLoadingScreenSuccess();
+        });
+    });
+};
+
+
+const startPyodide = async() => {
+    startLoadingScreen();
+
+    // loading the pyodide core. (this will load the core only)
+    loadingScreenMessage("Loading Pyodide core...");
+    //document.getElementById("statusButton").value = "Loading Pyodide";
+    const pyodide = await loadPyodide({ indexURL: "/js/pyodide/" });
+    // Pyodide core is now ready to use
+
+    // setting up virtual filesystem
+    // this needs to happen after the core is loaded
+    loadingScreenMessage('Setting up virtual filesystem...');
+    BrowserFS.configure({
+        fs: "MountableFileSystem",
+        options: {
+            '/volatile': { fs: "InMemory" },
+            '/static': { fs: "LocalStorage" }
+        }
+    }, function(e) {
+        if (e) {
+            loadingScreenMessage(e);
+            stopLoadingScreenError('Error while setting up virtual filesystem...');
+
+            // An error happened!
+            throw e;
+        }
+        // Otherwise, BrowserFS is ready-to-use!
+
+        var fs = BrowserFS.BFSRequire('fs');
+        let FS = pyodide._module.FS;
+        let PATH = pyodide._module.PATH;
+        let ERRNO_CODES = pyodide._module.ERRNO_CODES;
+        var BFS = new BrowserFS.EmscriptenFS(FS, PATH, ERRNO_CODES);
+        //FS.mkdir('data');
+        loadingScreenMessage('Mounting LocalStorage based filesystem...');
+        FS.mkdir('/static');
+        loadingScreenMessage('Mounting memory filesystem...');
+        FS.mkdir('/volatile');
+        FS.mount(BFS, { root: '/static' }, '/static');
+        FS.mount(BFS, { root: '/volatile' }, '/volatile');
+
+        if (loadSessionData != null) {
+            loadingScreenMessage('Writing session data to file...');
+            let bfsBuffer = BrowserFS.BFSRequire('buffer');
+            data = bfsBuffer.Buffer.from(loadSessionData);
+            fs.writeFileSync("/static/octopwn.session", data);
+            loadingScreenMessage('Session data written to file');
+        }
+
+
+    });
+    //refreshFileList();
+
+    // loading packages and starting the python application
+    loadPackages(pyodide);
+};

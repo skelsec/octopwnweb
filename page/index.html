@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<meta charset="UTF-8">
+<html>
+<title>OctoPwn</title>
+
+<head>
+
+    <link type="text/css" rel="stylesheet" href="/css/goldenlayout-base.css" />
+    <link type="text/css" rel="stylesheet" href="/css/goldenlayout-dark-theme.css" />
+    <link type="text/css" rel="stylesheet" href="/css/jquery.terminal.min.css" />
+    <link type="text/css" rel="stylesheet" href="/css/bootstrap.5.0.2.min.css" />
+    <link type="text/css" rel="stylesheet" href="/js/datatables/datatables.min.css" />
+    <link type="text/css" rel="stylesheet" href="/css/vis.min.css" />
+    <link type="text/css" rel="stylesheet" href="/css/vis-network.min.css" />
+    <link type="text/css" rel="stylesheet" href="/css/toastui-editor.css" />
+    <link type="text/css" rel="stylesheet" href="/css/mystyle.css" />
+    <link type="text/css" rel="stylesheet" href="/css/datatableCustom.css" />
+
+    <script type="text/javascript" src="/js/jquery-3.6.0.min.js"></script>
+    <script type="text/javascript" src="/js/datatables/datatables.min.js"></script>
+    <script type="text/javascript" src="/js/jquery.terminal.min.js"></script>
+    <script type="text/javascript" src="/js/bootstrap.5.0.2.min.js"></script>
+    <script type="text/javascript" src="/js/marked.js"></script>
+    <script type="text/javascript" src="/js/goldenlayout.min.js"></script>
+    <script type="text/javascript" src="/js/browserfs.min.js"></script>
+    <script type="text/javascript" src="/js/filedrop.js"></script>
+    <script type="text/javascript" src="/js/vis.min.js"></script>
+    <script type="text/javascript" src="/js/vis-network.min.js"></script>
+
+    <script type="text/javascript" src="/js/interfaces/file.js"></script>
+    <script type="text/javascript" src="/js/interfaces/gui.js"></script>
+    <script type="text/javascript" src="/js/interfaces/notes.js"></script>
+    <script type="text/javascript" src="/js/interfaces/network.js"></script>
+    <script type="text/javascript" src="/js/interfaces/rdp.js"></script>
+    <script type="text/javascript" src="/js/interfaces/graph.js"></script>
+    <script type="text/javascript" src="/js/interfaces/nmap.js"></script>
+
+
+    <script type="text/javascript" src="/js/pyodide/pyodide.js"></script>
+    <script type="text/javascript" src="/js/pyconsole.js"></script>
+    <script type="text/javascript" src="consolescript.js"></script>
+
+
+
+    <script src="/js/toastui-editor-all.min.js"></script>
+
+    <script type="text/javascript">
+        // Reloading or navigating away might result in data loss
+        // Hence we're prompting the user
+        window.onbeforeunload = function(event) {
+            event.preventDefault();
+            return event.returnValue = "Are you sure you want to exit? Unsaved data will be lost!";
+        };
+
+        function clientcommandexec(ele, clientid) {
+            if (event.key === 'Enter') {
+                var history = document.getElementById('history-' + clientid);
+                var newOptionElement = document.createElement("option");
+                newOptionElement.textContent = ele.value;
+                if (history.firstChild.textContent != ele.value) {
+                    history.prepend(newOptionElement);
+                }
+
+                runCmd(ele.value, clientid);
+                ele.value = '';
+            }
+        }
+
+        function generateRDPScript(clientid, rdpwidth, rdpheight) {
+            return `<canvas id="rdpcanvas-${clientid}" tabindex="0" oncontextmenu="return false;" onkeydown="sendRDPKeys(this, event)" onkeyup="sendRDPKeys(this, event)" width="${rdpwidth}" height="${rdpheight}" canvasclientid=${clientid} onmousemove="sendRDPMousePos(this, event)" onmousedown="sendRDPMousePos(this, event)" onmouseup="sendRDPMousePos(this, event)" ></canvas>`;
+        }
+
+        function generateGraphScript(clientid, graphid) {
+            return `
+            <div>
+                <button class="btn btn-primary" id="pathcalcbutton-toda-${clientid}" onclick="calcPath(${clientid},${graphid},'TODA')">Path to DA</button>
+                <button class="btn btn-primary" id="pathcalcbutton-dcsync-${clientid}" onclick="calcPath(${clientid},${graphid},'DCSYNC')">DcSync</button>
+                <button class="btn btn-primary" id="pathcalcbutton-kerberoasttoda-${clientid}" onclick="calcPath(${clientid},${graphid},'KERBEROASTTODA')">Kerberoastable to DA</button>
+                <button class="btn btn-primary" id="pathcalcbutton-asreprasttoda-${clientid}" onclick="calcPath(${clientid},${graphid},'ASREPROASTTODA')">Asreproastable to DA</button>
+                <button class="btn btn-primary" id="pathcalcbutton-hvttoda-${clientid}" onclick="calcPath(${clientid},${graphid},'HVTTODA')">HVT to DA</button>
+                <button class="btn btn-primary" id="pathcalcbutton-ownedtoda-${clientid}" onclick="calcPath(${clientid},${graphid},'OWNEDTODA')">Owned to DA</button>
+                <button class="btn btn-primary" id="pathcalcbutton-ownedtohvt-${clientid}" onclick="calcPath(${clientid},${graphid},'OWNEDTOHVT')">Owned to HVT</button>
+                <button class="btn btn-primary" id="pathcalcbutton-ownedtoany-${clientid}" onclick="calcPath(${clientid},${graphid},'OWNEDTOANY')">Owned to any</button>
+                <button class="btn btn-primary" onclick="document.getElementById('genericPathCalcDiv').classList.toggle('hidden') = 'none'">Path Calc</button>
+                <br>
+                <div class="defaultColors hidden" id="genericPathCalcDiv">
+                    Path calc <br>
+                    <input type="text" id="pathcalcbutton-src-${clientid}-${graphid}" list="pathcalcbutton-src-${clientid}-${graphid}-datalist" placeholder="Source" onkeyup="searchNodes(${clientid},${graphid}, 'src')">
+                    <datalist id="pathcalcbutton-src-${clientid}-${graphid}-datalist"></datalist>
+                    <input type="text" id="pathcalcbutton-dst-${clientid}-${graphid}" list="pathcalcbutton-dst-${clientid}-${graphid}-datalist" placeholder="Destination" onkeyup="searchNodes(${clientid},${graphid}, 'dst')">
+                    <datalist id="pathcalcbutton-dst-${clientid}-${graphid}-datalist"></datalist>
+                    <button class="btn btn-primary" id="pathcalcbutton-path-${clientid}" onclick="calcPath(${clientid},${graphid},'PATH')">Calculate Path</button>
+                </div>
+                <div class="defaultColors">
+                    <a href="#" onclick="document.getElementById('edgefilterdiv').classList.toggle('hidden') = 'none'">Choose which edges to include during path calculation</a>
+                    <div id="edgefilterdiv" class="hidden">
+                        <label class="checkbox">
+                            <input type="checkbox" name="excludeEdgeList" value="trustedBy" checked> trustedBy
+                        </label>
+                        <label class="checkbox">
+                            <input type="checkbox" name="excludeEdgeList" value="sqladmin"checked> sqladmin
+                        </label>
+                        <label class="checkbox">
+                            <input type="checkbox" name="excludeEdgeList" value="hasSession" checked> hasSession
+                        </label>
+                        <label class="checkbox">
+                            <input type="checkbox" name="excludeEdgeList" value="canRDP" checked> canRDP
+                        </label>
+                        <label class="checkbox">
+                            <input type="checkbox" name="excludeEdgeList" value="executeDCOM" checked> executeDCOM
+                        </label>
+                        <label class="checkbox">
+                            <input type="checkbox" name="excludeEdgeList" value="adminTo" checked> adminTo
+                        </label>
+                        <label class="checkbox">
+                            <input type="checkbox" name="excludeEdgeList" value="psremote" checked> psremote
+                        </label>
+                        <label class="checkbox">
+                            <input type="checkbox" name="excludeEdgeList" value="pwsharing" checked> pwsharing
+                        </label>
+                        <label class="checkbox">
+                            <input type="checkbox" name="excludeEdgeList" value="gplink" checked> gplink
+                        </label>
+                        <label class="checkbox">
+                            <input type="checkbox" name="excludeEdgeList" value="allowedtoact" checked> allowedtoact
+                        </label>
+                        <label class="checkbox">
+                            <input type="checkbox" name="excludeEdgeList" value="Owner" checked> Owner
+                        </label>
+                        <label class="checkbox">
+                            <input type="checkbox" name="excludeEdgeList" value="GenericALL" checked> GenericALL
+                        </label>
+                        <label class="checkbox">
+                            <input type="checkbox" name="excludeEdgeList" value="GenericWrite" checked> GenericWrite
+                        </label>
+                        <label class="checkbox">
+                            <input type="checkbox" name="excludeEdgeList" value="WriteOwner" checked> WriteOwner
+                        </label>
+                        <label class="checkbox">
+                            <input type="checkbox" name="excludeEdgeList" value="WriteDacl" checked> WriteDacl
+                        </label>
+                        <label class="checkbox">
+                            <input type="checkbox" name="excludeEdgeList" value="ExtendedRightALL" checked> ExtendedRightALL
+                        </label>
+                        <label class="checkbox">
+                            <input type="checkbox" name="excludeEdgeList" value="AddMember" checked> AddMember
+                        </label>
+                        <label class="checkbox">
+                            <input type="checkbox" name="excludeEdgeList" value="ExtendedAll" checked> ExtendedAll
+                        </label>
+                        <label class="checkbox">
+                            <input type="checkbox" name="excludeEdgeList" value="GetChangesALL" checked> GetChangesALL
+                        </label>
+                        <label class="checkbox">
+                            <input type="checkbox" name="excludeEdgeList" value="GetChanges" checked> GetChanges
+                        </label>
+                        <label class="checkbox">
+                            <input type="checkbox" name="excludeEdgeList" value="User-Force-Change-Password" checked> User-Force-Change-Password
+                        </label>
+                    </div>
+                </div>
+
+                <div id="graphcanvas-${clientid}-${graphid}"></div>
+            </div>`;
+        }
+
+        function generateNotesWindow(clientid) {
+            var res = `
+                <div id="notesdiv-${clientid}" class="textEditorClass"></div>
+                <div id="consoleoutput">
+                    <textarea id="consoleoutputfield" readonly name="consoleoutput-${clientid}" rows=10 placeholder="Command output will appear here.\nType '?' for help."></textarea>
+                </div>
+                <div id="consoleinput">
+                    <input class="consoleinputfield" type="text" list="history-${clientid}" id="consoleinputfield-${clientid}" name="consoleinput" placeholder="Enter command here" onkeydown="clientcommandexec(this, ${clientid})">
+                    <datalist id="history-${clientid}">
+                    </datalist>
+                </div>`;
+            return res;
+        }
+
+        function generateTerminalscript(clientid, componentState) {
+            if (componentState.windowtype == 'notes') {
+                return generateNotesWindow(clientid);
+            }
+            var co = `<div id="consoleoutput">
+						<textarea id="consoleoutputfield" readonly name="consoleoutput-${clientid}" rows=30 placeholder="Command output will appear here.\nType '?' for help."></textarea>
+					</div>`;
+            if (clientid == 0) {
+                mainplaceholder = `Startup steps
+ 0. Read readme (recommended)
+ 1. Start your proxy app on localhost (optional, omitting this will disable all networking).
+ 2. Verify that proxy URL is pointing to the proxy. (optional)
+ 3. Click on the START button to load Pyodide framework -it might take a few seconds-.
+ 4. Type '?' for help.
+ 
+Detailed usage is in the readme.
+
+Hints
+ - FILES tab
+   - Uploaded files are stored in-memory, and will disappear when reloading this page.
+   - Stored files can be accessed by the built-in utilities using the '/volatile' mount path.
+   - The max size of the /volatile mount point depends on your RAM
+   - The /static mount point is backed by the non-volatile LocalStorage
+   - The size of /static depends on your browser settings (it's a few Mb by default)
+   - Sometimes you\'d need to click REFRESH it manually.
+ - CREDENTIALS tab
+   - Lists stored credentials which can be used in all clients and scanners
+   - Special characters like '\\' must be escaped with '\\'
+   - Currently they are displayed in a truncated format, don\'t be afraid of not seeing the middle part
+ - Octopwn web framework
+   - It runs in your browser. No data should go in/out to the internet after loading.
+   - Consists of static files only and can be easily hosted on-perm as well.
+   - The tabs in this layout are dynamic. Hold click on tab name and move it around.
+   - The default Pyodide console (python console) can be accessed at /console.html
+
+				`
+                co = `
+					<div id="consoleoutput">
+						<textarea id="consoleoutputfield" readonly name="consoleoutput-${clientid}" rows=30 placeholder="${mainplaceholder}"></textarea>
+					</div>`;
+            }
+            return `${co}
+					<div id="consoleinput">
+						<input class="consoleinputfield" type="text" list="history-${clientid}" id="consoleinputfield-${clientid}" name="consoleinput" placeholder="Enter command here" onkeydown="clientcommandexec(this, ${clientid})">
+						<datalist id="history-${clientid}">
+						</datalist>
+					</div>
+					
+				`;
+        }
+
+        var config = {
+            content: [{
+                "type": "row",
+                "isClosable": false,
+                "reorderEnabled": true,
+                "title": "",
+                "content": [{
+                    "type": "column",
+                    "isClosable": false,
+                    "reorderEnabled": true,
+                    "title": "",
+                    "width": 50,
+                    "content": [{
+                        "type": "stack",
+                        "width": 50,
+                        "isClosable": false,
+                        "reorderEnabled": true,
+                        "title": "",
+                        "activeItemIndex": 0,
+                        "content": [{
+                            "type": "component",
+                            "id": "client-tab-0",
+                            "componentName": "mainWindowComponent",
+                            "componentState": {
+                                "label": "mainWindow",
+                                "clientid": 0,
+                            },
+                            "isClosable": false,
+                            "reorderEnabled": true,
+                            "title": "MAIN"
+                        }, {
+                            "type": "component",
+                            "id": "client-tab--1",
+                            "componentName": "pythonConsoleComponent",
+                            "componentState": {
+                                "label": "pyconsoleWindow",
+                                "clientid": 0,
+                            },
+                            "isClosable": false,
+                            "reorderEnabled": true,
+                            "title": "PYTHON"
+                        }, ]
+                    }, ]
+                }, {
+                    "type": "column",
+                    "isClosable": false,
+                    "reorderEnabled": true,
+                    "title": "",
+                    "width": 50,
+                    "content": [{
+                        "type": "stack",
+                        "height": 25,
+                        "isClosable": true,
+                        "reorderEnabled": true,
+                        "title": "",
+                        "activeItemIndex": 0,
+                        "content": [{
+                            "type": "component",
+                            "componentName": "clientWindowComponent",
+                            "componentState": {
+                                "label": "clientWindow"
+                            },
+                            "isClosable": false,
+                            "reorderEnabled": true,
+                            "title": "CLIENTS"
+                        }, {
+                            "type": "component",
+                            "componentName": "CreateClientComponent",
+                            "componentState": {
+                                "label": "createClientWindow"
+                            },
+                            "isClosable": false,
+                            "reorderEnabled": true,
+                            "id": "createclienttab-0",
+                            "title": "Create Client"
+                        }, {
+                            "type": "component",
+                            "componentName": "CreateScannerComponent",
+                            "componentState": {
+                                "label": "createScannerWindow"
+                            },
+                            "isClosable": false,
+                            "reorderEnabled": true,
+                            "id": "createscannertab-0",
+                            "title": "Create Scanner"
+                        }, {
+                            "type": "component",
+                            "componentName": "CreateUtilComponent",
+                            "componentState": {
+                                "label": "createUtilWindow"
+                            },
+                            "isClosable": false,
+                            "reorderEnabled": true,
+                            "id": "createutiltab-0",
+                            "title": "Create Util"
+                        }, {
+                            "type": "component",
+                            "componentName": "CreateServerComponent",
+                            "componentState": {
+                                "label": "createServerWindow"
+                            },
+                            "isClosable": false,
+                            "reorderEnabled": true,
+                            "id": "createservertab-0",
+                            "title": "Create Server"
+                        }, ]
+                    }, {
+                        "type": "stack",
+                        "header": {},
+                        "isClosable": true,
+                        "reorderEnabled": true,
+                        "title": "",
+                        "activeItemIndex": 0,
+                        "height": 25,
+                        "content": [{
+                            "type": "component",
+                            "componentName": "credentialWindowComponent",
+                            "componentState": {
+                                "label": "credentialWindow"
+                            },
+                            "isClosable": false,
+                            "reorderEnabled": true,
+                            "title": "CREDENTIALS"
+                        }]
+                    }, {
+                        "type": "row",
+                        "header": {},
+                        "isClosable": true,
+                        "reorderEnabled": true,
+                        "title": "",
+                        "activeItemIndex": 0,
+                        "height": 45,
+                        "content": [{
+                            "type": "component",
+                            "componentName": "filesWindowComponent",
+                            "componentState": {
+                                "label": "filesWindow"
+                            },
+                            "isClosable": false,
+                            "reorderEnabled": true,
+                            "title": "FILES"
+                        }, {
+                            "type": "component",
+                            "componentName": "filesDragDropWindowComponent",
+                            "componentState": {
+                                "label": "uploadFilesWindow"
+                            },
+                            "isClosable": false,
+                            "reorderEnabled": true,
+                            "title": "UPLOAD"
+                        }, ]
+                    }, {
+                        "type": "row",
+                        "isClosable": true,
+                        "reorderEnabled": true,
+                        "title": "",
+                        "height": 50,
+                        "content": [{
+                            "type": "stack",
+                            "header": {},
+                            "isClosable": true,
+                            "reorderEnabled": true,
+                            "title": "",
+                            "activeItemIndex": 0,
+                            "width": 50,
+                            "height": 50,
+                            "content": [{
+                                "type": "component",
+                                "componentName": "proxyWindowComponent",
+                                "componentState": {
+                                    "label": "proxyWindow"
+                                },
+                                "isClosable": false,
+                                "reorderEnabled": true,
+                                "title": "PROXIES"
+                            }]
+                        }, {
+                            "type": "stack",
+                            "header": {},
+                            "isClosable": true,
+                            "reorderEnabled": true,
+                            "title": "",
+                            "activeItemIndex": 0,
+                            "width": 50,
+                            "content": [{
+                                "type": "component",
+                                "componentName": "targetWindowComponent",
+                                "componentState": {
+                                    "label": "targetWindow"
+                                },
+                                "isClosable": false,
+                                "reorderEnabled": true,
+                                "title": "TARGETS"
+                            }]
+                        }]
+                    }]
+                }]
+            }],
+        };
+        var myLayout = new GoldenLayout(config, document.getElementById("goldenLayoutBody"));
+        myLayout.registerComponent('mainWindowComponent', function(container, componentState) {
+            container.getElement().html(
+                generateTerminalscript(componentState.clientid, componentState)
+            );
+        });
+        myLayout.registerComponent('pythonConsoleComponent', function(container, componentState) {
+            container.getElement().html(`
+				<div id="pyConsoleDiv">
+				</div>`);
+        });
+        myLayout.registerComponent('clientWindowComponent', function(container, componentState) {
+            container.getElement().html(`
+                <div>
+                    <div id="credtablecontainer">
+                        <table class="hover row-border order-column compact" cellspacing="0" width="100%" id="clientTable">
+                            <thead style="display:none;">
+                                <tr>
+                                    <th>CID</th>
+                                    <th>name</th>
+                                    <th>description</th>
+                                    <th>updated</th>
+                                </tr>
+                            </thead>
+				        </table>
+                    </div>
+                </div>`);
+        });
+        myLayout.registerComponent('CreateScannerComponent', function(container, componentState) {
+            container.getElement().html(`
+            <div class="defaultColors">
+                <div>
+                    <p>Select the type of scanner you want to use. This window should be with icons...</p>
+                </div>
+                <div>
+                    <label for="createNewScannerType" class="col-sm-2 control-label">Scanner type</label>
+                    <div class="col-sm-8">
+                        <select class="form-select" id="createNewScannerType" aria-label="Default select example">
+                            <option selected value="1">JACKDAW</option>
+                            <option value="2">SMBFINGER</option>
+                            <option value="3">SMBFILE</option>
+                            <option value="4">SMBADMIN</option>
+                            <option value="5">SMBSESSION</option>
+                            <option value="6">SMBPRINTNIGHTMARE</option>
+                            <option value="7">SMBIFACE</option>
+                            <option value="8">SMBPROTO</option>
+                            <option value="9">RDPSCREEN</option>
+                            <option value="10">RDPLOGIN</option>
+                            <option value="11">RDPCAP</option>
+                            <option value="12">KRB5USER</option>
+                            <option value="13">SMBREGDUMP</option>
+                        </select>
+                    </div>
+                    <button type="button" class="btn btn-primary" id="createScannerButton" onclick="createNewScanner();">Create Scanner</button>
+                </div>
+            </div>`);
+        });
+        myLayout.registerComponent('CreateUtilComponent', function(container, componentState) {
+            container.getElement().html(`
+            <div class="defaultColors">
+                <div>
+                    <p>Select the type of util you want to use. This window should be with icons...</p>
+                </div>
+                <div>
+                    <label for="createNewUtilType" class="col-sm-2 control-label">Scanner type</label>
+                    <div class="col-sm-8">
+                        <select class="form-select" id="createNewUtilType" aria-label="Default select example">
+                            <option selected value="1">JACKDAW</option>
+                            <option value="2">PYPYKATZ</option>
+                            <option value="3">DPAPI</option>
+                            <option value="4">NMAP</option>
+                            <option value="5">NOTES</option>
+                        </select>
+                    </div>
+                    <button type="button" class="btn btn-primary" id="createUtilButton" onclick="createNewUtil();">Create Util</button>
+                </div>
+            </div>`);
+        });
+        myLayout.registerComponent('CreateServerComponent', function(container, componentState) {
+            container.getElement().html(`
+            <div class="defaultColors">
+                <div>
+                    <p>Select the type of server you want to use. This window should be with icons...</p>
+                </div>
+                <div>
+                    <label for="createNewServerType" class="col-sm-2 control-label">Server type</label>
+                    <div class="col-sm-8">
+                        <select class="form-select" id="createNewServerType" aria-label="Default select example">
+                            <option selected value="1">LLMNR</option>
+                            <option value="2">NBTNS</option>
+                            <option value="3">MDNS</option>
+                        </select>
+                    </div>
+                    <button type="button" class="btn btn-primary" id="createServerButton" onclick="createNewServer();">Create Server</button>
+                </div>
+            </div>`);
+        });
+        myLayout.registerComponent('CreateClientComponent', function(container, componentState) {
+            container.getElement().html(`
+                <div class="defaultColors">
+                    <div>
+                    To create a client select the credential, target and optionally proxy to be used in the corresponding tabs.
+                    </div>
+                    <div>
+                        <label for="createClientCredentialID" class="control-label">Credential</label>
+                        <span type="text" id="createClientCredentialID"></span>
+                        <span type="text" id="createClientCredentialLine"></span>
+                    </div>
+                    <div>
+                        <label for="createClientTargetID" class="control-label">Target</label>
+                        <span type="text" class="consoleinput" id="createClientTargetID"></span>
+                        <span type="text" class="consoleinput" id="createClientTargetLine"></span>
+                    </div>
+                    <div>
+                        <label for="createClientProxyID" class="control-label">Proxy</label>
+                        <span type="text" class="consoleinput" id="createClientProxyID"></span>
+                        <span type="text" class="consoleinput" id="createClientProxyLine"></span>
+                    </div>
+                    <div>
+                        <label for="createClientAuthProtocol" class="col-sm-2 control-label">AuthProto</label>
+                        <div class="col-sm-8">
+                            <select class="form-select" id="createClientAuthProtocol" aria-label="Default select example">
+                                <option selected value="1">NTLM</option>
+                                <option value="2">KERBEROS</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label for="createNewClientType" class="col-sm-2 control-label">Client Type</label>
+                        <div class="col-sm-8">
+                            <select class="form-select" id="createNewClientType" aria-label="Default select example" onChange="javascript:createClientProtocolTypeChanged(this.value);">
+                            <option selected value="1">SMB</option>
+                            <option value="2">LDAP</option>
+                            <option value="3">Kerberos</option>
+                            <option value="4">RDP</option>
+                            <option value="5">VNC</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-primary" id="createClientButton" onclick="createNewClient();">Create Client</button>
+
+                </div>`);
+        });
+        myLayout.registerComponent('credentialWindowComponent', function(container, componentState) {
+            container.getElement().html(`
+                <div>
+                    <div id="credtablecontainer">
+                        <table class="hover row-border order-column compact" cellspacing="0" width="100%" id="credentialTable">
+                            <thead style="display:none;">
+                                <tr>
+                                    <th>CID</th>
+                                    <th>Cred</th>
+                                    <th>Domain</th>
+                                    <th>Username</th>
+                                    <th>Secret</th>
+                                    <th>Stype</th>
+                                    <th>Notes</th>
+                                    <th>line</th>
+                                </tr>
+                            </thead>
+				        </table>
+                    </div>
+
+                    <div class="modal fade" id="addCredentialModal" tabindex="-1" role="dialog" aria-labelledby="addCredentialModal" aria-hidden="true" data-bs-backdrop="static">
+                        <div class="modal-dialog modal-md">
+                            <div class="modal-content">
+                                <!-- Modal Header -->
+                                <div class="modal-header">
+                                    <h4 class="modal-title" id="myModalLabel">Add new credential</h4>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                
+                                <!-- Modal Body -->
+                                <div class="modal-body">
+                                
+                                
+                                
+                        <form class="form-horizontal">
+
+                            <div class="form-group">
+                                <!-- left column -->
+                                <div>
+                                    <div class="form-group">
+                                        <label for="addCredentialDomain" class="col-sm-2 control-label">Domain</label>
+                                        <div class="col-sm-8">
+                                            <input type="text" class="form-control consoleinput" id="addCredentialDomain" placeholder="Domain">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="addCredentialUsername" class="col-sm-2 control-label">Username</label>
+                                        <div class="col-sm-8">
+                                            <input type="text" class="form-control consoleinput" id="addCredentialUsername" placeholder="Username">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="addCredentialSecret" class="col-sm-2 control-label">Secret</label>
+                                        <div class="col-sm-8">
+                                            <input type="text" class="form-control consoleinput" id="addCredentialSecret" placeholder="User secret here">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="addCredentialSecretType" class="col-sm-2 control-label">Secret type</label>
+                                        <div class="col-sm-8">
+                                            <select class="form-select" id="addCredentialSecretType" aria-label="Default select example" onChange="javascript:addNewCredentialKeyTypeChanged(this.value);">
+                                            <option selected value="1">Password</option>
+                                            <option value="2">NT</option>
+                                            <option value="3">RC4</option>
+                                            <option value="4">AES</option>
+                                            <option value="5">P12/PFX</option>
+                                            <option value="6">PEM</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div id='addNewCredentialKeyFileDiv' class="form-group" hidden>
+                                        <label for="addCredentialKeyfile" class="col-sm-2 control-label">Keyfile path</label>
+                                        <div class="col-sm-8">
+                                            <input type="text" class="form-control" id="addCredentialKeyfile" placeholder="P12/PFX file path">
+                                        </div>
+                                    </div>
+                                    <div id='addNewCredentialCertFileDiv' class="form-group" hidden>
+                                        <label for="addCredentialCertfile" class="col-sm-2 control-label">Certfile path</label>
+                                        <div class="col-sm-8">
+                                            <input type="text" class="form-control" id="addCredentialCertfile" placeholder="Keyfile path">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        <!-- Modal Footer -->
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-primary" id="addCredentialSubmit" data-bs-dismiss="modal" onclick="addNewCredential()">Add</button>
+                                </div><!-- End Modal Footer -->
+                        
+                        
+
+
+                        </form>
+                    </div> <!-- End modal body div -->
+                        </div> <!-- End modal content div -->
+                    </div> <!-- End modal dialog div -->
+                    </div> <!-- End modal div -->
+
+
+                </div>`);
+        });
+        myLayout.registerComponent('filesWindowComponent', function(container, componentState) {
+            container.getElement().html(`
+                <div>
+                    <div class="table-wrapper">
+                        <ul id="uploadedFiles" class="listtable"></ul>
+                    </div>
+                </div>`);
+        });
+        myLayout.registerComponent('filesDragDropWindowComponent', function(container, componentState) {
+            container.getElement().html(`
+                <div>
+                    <div id="file-drop-area">
+                        <form class="fileUploadForm">
+                            <p>Upload multiple files with the file dialog or by dragging and dropping files onto this tab.</p>
+                            <input type="file" class="btn btn-primary fileuploadbutton" id="fileUploadButtonElem" multiple accept="*" onchange="handleFiles(this.files)">
+                            <label class="btn btn-primary fileuploadbutton" for="fileUploadButtonElem">Select some files</label></input>
+                        </form>
+                    </div>
+                </div>
+				`);
+        });
+        myLayout.registerComponent('proxyWindowComponent', function(container, componentState) {
+            container.getElement().html(`
+                <div>                    
+                    <div id="credtablecontainer">
+                        <table class="hover row-border order-column compact" cellspacing="0" width="100%" id="proxyTable">
+                            <thead style="display:none;">
+                                <tr>
+                                    <th>PID</th>
+                                    <th>addr</th>
+                                    <th>type</th>
+                                    <th>notes</th>
+                                    <th>line</th>
+                                </tr>
+                            </thead>
+				        </table>
+                    </div>
+
+
+                    <div class="modal fade" id="addProxyModal" tabindex="-1" role="dialog" aria-labelledby="addProxyModal" aria-hidden="true" data-bs-backdrop="static">
+                    <div class="modal-dialog modal-large">
+                        <div class="modal-content">
+                            <!-- Modal Header -->
+                            <div class="modal-header">
+                                <h4 class="modal-title" id="myModalLabel">Add new proxy</h4>
+                                <button type="button" id="modaldismissButton" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            
+                            <!-- Modal Body -->
+                            <div class="modal-body">
+                                <form class="form-horizontal">
+
+                                    <div class="form-group">
+                                        <!-- left column -->
+                                        <div>
+                                            <div class="form-group">
+                                                <label for="addProxyIP" class="col-sm-2 control-label">IP address</label>
+                                                <div class="col-sm-8">
+                                                    <input type="text" class="form-control" id="addProxyIP" placeholder="IP address">
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="addProxyPort" class="col-sm-2 control-label">Port</label>
+                                                <div class="col-sm-8">
+                                                    <input type="text" class="form-control" id="addProxyPort" placeholder="Port">
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="addProxyType" class="col-sm-2 control-label">Proxy type</label>
+                                                <div class="col-sm-8">
+                                                    <select class="form-select" id="addProxyType" aria-label="Default select example" onChange="javascript:addNewProxyTypeChanged(this.value);">
+                                                    <option selected value="1">SOCKS5</option>
+                                                    <option value="2">SOCKS4A</option>
+                                                    <option value="3">SOCKS4</option>
+                                                    <option value="4">HTTP</option>
+                                                    <option value="5">WSNET</option>
+                                                    <option value="6">WSNETWS</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                                <div class="form-check">
+                                                    <label class="form-check-label" for="addProxyTLS">TLS</label>
+                                                    <input class="form-check-input" type="checkbox" value="" id="addProxyTLS">
+                                                </div>
+                                            </div>
+                                            <div id="addNewProxyUsernameDiv" class="form-group">
+                                                <label for="addNewProxyUsername" class="col-sm-2 control-label">Username</label>
+                                                <div class="col-sm-8">
+                                                    <input type="text" class="form-control" id="addNewProxyUsername" placeholder="Username">
+                                                </div>
+                                            </div>
+                                            <div id="addNewProxyPasswordDiv" class="form-group">
+                                                <label for="addNewProxyPassword" class="col-sm-2 control-label">Password</label>
+                                                <div class="col-sm-8">
+                                                    <input type="text" class="form-control" id="addNewProxyPassword" placeholder="">
+                                                </div>
+                                            </div>
+                                            <div id="addNewProxyAgentIDDiv" class="form-group" hidden>
+                                                <label for="addNewProxyAgentID" class="col-sm-2 control-label">Agent ID</label>
+                                                <div class="col-sm-8">
+                                                    <input type="text" class="form-control" id="addNewProxyAgentID" placeholder="Agent ID">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                <!-- Modal Footer -->
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-primary" id="addTargetSubmit" onclick="addNewProxy()">Add</button>
+                                        </div><!-- End Modal Footer -->
+                                </form>
+                            </div> <!-- End modal body div -->
+                        </div> <!-- End modal content div -->
+                    </div> <!-- End modal dialog div -->
+                </div> <!-- End modal div -->
+                </div>`);
+        });
+        myLayout.registerComponent('targetWindowComponent', function(container, componentState) {
+            container.getElement().html(`
+            <div>
+                <div id="credtablecontainer">
+                        <table class="hover row-border order-column compact" cellspacing="0" width="100%" id="targetTable">
+                            <thead style="display:none;">
+                                <tr>
+                                    <th>TID</th>
+                                    <th>Addr</th>
+                                    <th>DCIP</th>
+                                    <th>Realm</th>
+                                    <th>Notes</th>
+                                    <th>line</th>
+                                </tr>
+                            </thead>
+				        </table>
+                    </div>
+
+                <div class="modal fade" id="addTargetModal" tabindex="-1" role="dialog" aria-labelledby="addTargetModal" aria-hidden="true" data-bs-backdrop="static">
+                    <div class="modal-dialog modal-large">
+                        <div class="modal-content">
+                            <!-- Modal Header -->
+                            <div class="modal-header">
+                                <h4 class="modal-title" id="myModalLabel">Add new target</h4>
+                                <button type="button" id="modaldismissButton" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            
+                            <!-- Modal Body -->
+                            <div class="modal-body">
+                                <form class="form-horizontal">
+
+                                    <div class="form-group">
+                                        <!-- left column -->
+                                        <div>
+                                            <div class="form-group">
+                                                <label for="addTargetIP" class="col-sm-2 control-label">IP address</label>
+                                                <div class="col-sm-8">
+                                                    <input type="text" class="form-control" id="addTargetIP" placeholder="IP address">
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="addTargetHostname" class="col-sm-2 control-label">Hostname</label>
+                                                <div class="col-sm-8">
+                                                    <input type="text" class="form-control" id="addTargetHostname" placeholder="Hostname/FQDN">
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="addTargetDCIP" class="col-sm-2 control-label">DCIP</label>
+                                                <div class="col-sm-8">
+                                                    <input type="text" class="form-control" id="addTargetDCIP" placeholder="DC IP address (Kerberos)">
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="addTargetRealm" class="col-sm-2 control-label">Realm</label>
+                                                <div class="col-sm-8">
+                                                    <input type="text" class="form-control" id="addTargetRealm" placeholder="Realm (Kerberos)">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                <!-- Modal Footer -->
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-primary" id="addTargetSubmit" onclick="addNewTarget()">Add</button>
+                                        </div><!-- End Modal Footer -->
+                                </form>
+                            </div> <!-- End modal body div -->
+                        </div> <!-- End modal content div -->
+                    </div> <!-- End modal dialog div -->
+                </div> <!-- End modal div -->
+            </div>`);
+        });
+        myLayout.registerComponent('rdpWindowComponent', function(container, componentState) {
+            container.getElement().html(
+                generateRDPScript(componentState.clientid, componentState.rdpwidth, componentState.rdpheight)
+            );
+        });
+        myLayout.registerComponent('graphWindowComponent', function(container, componentState) {
+            container.getElement().html(
+                generateGraphScript(componentState.clientid, componentState.graphid)
+            );
+        });
+        myLayout.registerComponent('nmapWindowComponent', function(container, componentState) {
+            container.getElement().html(
+                componentState.code
+            );
+        });
+
+        //myLayout.init();
+        window.onload = function() {
+            $('#starterModal').modal('show');
+            //var starterModal = document.getElementById("starterModal");
+
+        };
+    </script>
+</head>
+
+<body>
+    <div>
+        <div class="modal fade" id="starterModal" tabindex="-1" role="dialog" aria-labelledby="starterModal" aria-hidden="true" data-bs-backdrop="static">
+            <div class="modal-dialog modal-lg" style="background-color: #1f241d;">
+                <div class="modal-content">
+                    <!-- Modal Header -->
+                    <div class="modal-header">
+                        <h4 class="modal-title" id="myModalLabel">
+                            Octopwn
+                        </h4>
+                    </div>
+
+                    <!-- Modal Body -->
+                    <div class="modal-body">
+                        <div id="startupParameterForm">
+                            <div id="mainmessage" class="col-bg-15">
+                                Internal pentest framework in your browser, currently beta version.
+                                <p>Start with the <a href="readme.html" target="_blank" rel="noopener noreferrer">readme</a>!</p>
+                                <p>All data stays in your browser, the files in memory, the framework is running on <a href="https://pyodide.org/en/stable/" target="_blank" rel="noopener noreferrer">Pyodide</a> (Python in WASM)</p>
+                                <p> Join the official <a href="https://discord.gg/fkGSJkrcEA" target="_blank" rel="noopener noreferrer">#octopwn channel on discord </a> If you like it please support us at <a href="https://porchetta.industries/" target="_blank"
+                                        rel="noopener noreferrer">Porchetta Industries</a>
+                            </div>
+                            <div class="frm" class="col-bg-15">
+                                <div class="form-group">
+                                    <label for="proxyurl" class="col-lg-4 control-label">WS->TCP Proxy url</label>
+                                    <div class="col-lg-6">
+                                        <input type="text" class="form-control" id="proxyurl" value="ws://127.0.0.1:8700">
+                                    </div>
+                                </div>
+                                <div>
+                                    <div>
+                                        <h2 class="mb-0">
+                                            <button class="btn btn-link" type="button" data-bs-toggle="collapse" data-bs-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
+                                                <i class="fa fa-plus"></i>Options
+                                            </button>
+                                        </h2>
+                                    </div>
+                                    <div>
+                                        <div class="collapse" id="collapseExample">
+                                            <div class="form-group">
+                                                <label for="overridesessionfile" class="col-sm-4 control-label">Load existing session file</label>
+                                                <div class="col-sm-6">
+                                                    <input type="file" class="form-control" id="overridesessionfile" multiple accept=".session" onchange="overrideSessionFile(this.files)">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+
+
+                            </div>
+                        </div>
+                        <div class="col-bg-20">
+                            <textarea class="consoleinputfield" id="loadingMessageTextArea" readonly rows=20 style="width: 100%;" hidden placeholder="Loading..."></textarea>
+                        </div>
+                        <!-- Modal Footer -->
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-primary" id="startPyodideButton" onclick="startPyodide();">START</button>
+                            <div id="loadingProgressBar" hidden>
+                                <button class="btn btn-primary" type="button" disabled>
+                                    <span class="spinner-border spinner-border-sm octoloadbutton" role="status" aria-hidden="true"></span>
+                                    <span class="sr-only octoloadbutton">Loading...</span>
+                                </button>
+                            </div>
+                        </div>
+                        <!-- End Modal Footer -->
+                    </div>
+                    <!-- End modal body div -->
+                </div>
+                <!-- End modal content div -->
+            </div>
+            <!-- End modal dialog div -->
+        </div>
+        <!-- End modal div -->
+    </div>
+
+
+    <div id="goldenLayoutBody"></div>
+</body>
+
+</html>
