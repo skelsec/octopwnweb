@@ -67,14 +67,16 @@ function createNewWebSocket(url, onopen_cb, onmessage_cb, onclosed_cb, reuse_ws 
         }
         var ws = new WebSocket(url);
         ws.onopen = function(event) {
-            onopen_cb(event);
+            onopen_cb.set();
         };
         ws.onclose = function(event) {
-            onclosed_cb(event);
+            onclosed_cb.set();
         };
-        ws.onmessage = function(event) {
-            onmessage_cb(event);
+        ws.onmessage = async function(event) {
+            await onmessage_cb.put(event.data);
         };
+        ws.binaryType = "arraybuffer";
+
         var wsid = webscoket_counter;
         webscoket_counter++;
 
@@ -100,7 +102,10 @@ function deleteWebSocket(wsid) {
     }
 }
 
-function sendWebSocketData(wsid, data) {
-    if (wsid == 0) scanner_websocket.send(data);
-    else websocket_lookup[wsid].send(data);
+function sendWebSocketData(wsid, dataProxy) {
+    let buffer = dataProxy.getBuffer('u8clamped');
+    if (wsid == 0) scanner_websocket.send(buffer.data);
+    else websocket_lookup[wsid].send(buffer.data);
+    dataProxy.destroy();
+    buffer.release();
 }

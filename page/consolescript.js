@@ -67,8 +67,18 @@ const loadPackages = (pyodide) => {
 
             octopwnCreateClient = async(ctype, cauth, cid, tid, pid) => {
                 let app = pyodide.globals.get('octopwnApp');
-                await app.do_createclient(ctype, cauth, cid, tid, pid)
+                var respy = await app.do_createclient(ctype, cauth, cid, tid, pid);
+                var res = respy.toJs();
+                respy.destroy();
+                var exc = undefined;
+                if (res[1] != undefined) {
+                    let excstr = res[1].toString();
+                    let tbformat = pyodide.globals.get('gettb4exc');
+                    let traceback = tbformat(res[1]);
+                    exc = [excstr, traceback];
+                }
                 app.destroy();
+                return [res[0], exc];
             }
 
             octopwnCreateScanner = async(stype) => {
@@ -86,6 +96,12 @@ const loadPackages = (pyodide) => {
             octopwnCreateUtil = async(stype) => {
                 let app = pyodide.globals.get('octopwnApp');
                 await app.do_createutil(stype)
+                app.destroy();
+            }
+
+            octopwnChangeDescription = async(otype, oid, description) => {
+                let app = pyodide.globals.get('octopwnApp');
+                await app.do_changedescription(otype, oid, description)
                 app.destroy();
             }
 

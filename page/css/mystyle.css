@@ -11,7 +11,7 @@
     margin-bottom: 0%;
 }
 
-#consoleoutputfield {
+.consoleoutputfield {
     max-width: 100%;
     max-height: 100%;
     width: 100%;
@@ -20,7 +20,7 @@
     margin-right: auto;
     border: 1px solid #153510;
     background-color: #1f241d;
-    font-size: medium;
+    font-size: large;
     color: #45a636;
     font-family: monospace;
 }
@@ -29,7 +29,7 @@
     width: 80%;
     border: 1px solid #153510;
     background-color: #1f241d;
-    font-size: medium;
+    font-size: large;
     color: #45a636;
     font-family: monospace;
 }
@@ -38,7 +38,7 @@
     width: 80%;
     border: 1px solid #153510;
     background-color: #1f241d;
-    font-size: medium;
+    font-size: large;
     color: #45a636;
     font-family: monospace;
 }

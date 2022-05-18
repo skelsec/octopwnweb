@@ -359,14 +359,14 @@ function updateGraphCanvas(clientid, graphid, graphdata_json) {
         // should implement a menu here to set hvt and owned
         network.on('oncontext', function(props) {
             removeRightClickMenu();
-            var node = network.getNodeAt(props.pointer.DOM);
-            if (node == undefined) return;
+            var nodeid = network.getNodeAt(props.pointer.DOM);
+            if (nodeid == undefined) return;
             props.event.preventDefault();
-            console.log(node);
+            console.log(nodeid);
             $(`<div class='graph-nodes-rightclick-menu'>
                     <ul>
-                        <li onclick="toggleNodeProperty(${clientid}, ${graphid}, '${node}', 'HVT')">HVT</li>
-                        <li onclick="toggleNodeProperty(${clientid}, ${graphid}, '${node}', 'OWNED')">OWNED</li>
+                        <li onclick="toggleNodeProperty(${clientid}, ${graphid}, '${nodeid}', 'HVT')">HVT</li>
+                        <li onclick="toggleNodeProperty(${clientid}, ${graphid}, '${nodeid}', 'OWNED')">OWNED</li>
                     </ul>
                 </div>`)
                 .appendTo("body").finish().toggle(100)
@@ -421,7 +421,6 @@ async function calcPath(clientid, graphid, pathtype, src = null, dst = null) {
             }
         }
     }
-    console.log(edgeExclude);
     await path_calc_cb(pathtype, src, dst, edgeExclude);
 }
 
@@ -449,11 +448,46 @@ async function searchNodes(clientid, graphid, direction) {
 }
 
 async function toggleNodeProperty(clientid, graphid, sid, propertyname) {
+    // TODO: not working correctly!
     console.log(clientid);
     console.log(graphid);
     console.log(sid);
     console.log(propertyname);
 
+    var client = OCTOPWN_CLIENT_LOOKUP[clientid];
+    var network = graphs_lookup[`graphcanvas-${clientid}-${graphid}`];
+    var nodeObj = network.body.data.nodes._data[sid];
+    console.log(nodeObj);
+    if (propertyname == 'OWNED') {
+        if (nodeObj.owned == null || nodeObj.owned == undefined || nodeObj.owned == false) {
+            await client.do_graphsetowned(sid, false);
+            nodeObj.owned = true;
+            imgdata = getNodeImage(nodeObj);
+            nodeObj.image = imgdata;
+        } else {
+            await client.do_graphclearowned(sid, false);
+            nodeObj.owned = false;
+            imgdata = getNodeImage(nodeObj);
+            nodeObj.image = imgdata;
+        }
+        network.redraw();
+    }
+    if (propertyname == 'HVT') {
+        if (nodeObj.highvalue == null || nodeObj.highvalue == undefined || nodeObj.highvalue == false) {
+            await client.do_grapthsethvt(sid, false);
+            nodeObj.highvalue = true;
+            imgdata = getNodeImage(nodeObj);
+            nodeObj.image = imgdata;
+            network.body.data.nodes._data[sid] = nodeObj;
+        } else {
+            await client.do_grapthclearhvt(sid, false);
+            nodeObj.highvalue = false;
+            imgdata = getNodeImage(nodeObj);
+            nodeObj.image = imgdata;
+            network.body.data.nodes._data[sid] = nodeObj;
+        }
+        network.redraw();
+    }
     removeRightClickMenu();
 }
 

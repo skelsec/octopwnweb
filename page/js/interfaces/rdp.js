@@ -51,7 +51,7 @@ var rdp_specialchar_to_name = {
     'ContextMenu': 'VK_RMENU',
 }
 
-function sendRDPMousePos(canvas, evt) {
+async function sendRDPMousePos(canvas, evt) {
     // this must refer to a canvas!!!!
     var client_id = canvas.getAttribute("canvasclientid");
     var rect = canvas.getBoundingClientRect();
@@ -77,7 +77,7 @@ function sendRDPMousePos(canvas, evt) {
     }
 
 
-    rdp_events[client_id]['mouse'](x, y, button, press, release);
+    await rdp_events[client_id]['mouse'](x, y, button, press, release);
 
 }
 
@@ -131,49 +131,20 @@ function addNewRDPCanvasWindow(cid, cliname, width, height, mouse_cb, keyboard_c
     myLayout.root.contentItems[0].addChild(newItemConfig);
 }
 
-function updateRDPCanvas(cid, image_data, x, y, width, height) {
+function updateRDPCanvas(cid, imgDataBuffProxy, x, y, width, height) {
     //console.log("Update!");
-    //console.log(image_data);
+    //console.log(imgDataBuffProxy);
     try {
-        var canvas = document.getElementById(`rdpcanvas-${cid}`);
-        var ctx = canvas.getContext("2d");
-        image_data = new Uint8ClampedArray(image_data);
+        let canvas = document.getElementById(`rdpcanvas-${cid}`);
+        let ctx = canvas.getContext("2d");
+        let imgDataBuff = imgDataBuffProxy.getBuffer('u8clamped');
+        imgDataBuffProxy.destroy();
         imageData = new ImageData(width, height);
-        imageData.data.set(image_data);
+        imageData.data.set(imgDataBuff.data);
         ctx.putImageData(imageData, x, y);
+        imgDataBuff.release();
     } catch (error) {
         console.error(error);
         return false;
     }
 }
-
-
-//function updateGraphCanvas(clientid, graphid, graphdata_json) {
-//    try {
-//        console.log(graphdata_json);
-//        var garphdata = JSON.parse(graphdata_json);
-//        console.log(garphdata);
-//        var network = graphs_lookup[`graphcanvas-${clientid}-${graphid}`];
-//        network.destroy();
-//        edges = new vis.DataSet();
-//        edges.add(garphdata['edges']);
-//        nodes = new vis.DataSet();
-//        nodes.add(garphdata['nodes']);
-//        console.log(edges);
-//        console.log(nodes);
-//        console.log(network);
-//        var data = {
-//            nodes: nodes,
-//            edges: edges,
-//        };
-//
-//        var container = document.getElementById(`graphcanvas-${clientid}-${graphid}`);
-//        network = new vis.Network(container, data, graphOptions);
-//        graphs_lookup[`graphcanvas-${clientid}-${graphid}`] = network;
-//        return true;
-//    } catch (error) {
-//        console.error(error);
-//        return false;
-//    }
-//}
-//

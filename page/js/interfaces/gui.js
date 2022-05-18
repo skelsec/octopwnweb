@@ -343,6 +343,12 @@ function initializeGUI() {
                 createClientUpdateCredential(selectedrow[0], selectedrow[6]);
             }
         });
+        $('#credentialTable tbody').on('dblclick', 'tr', function() {
+            var data = credtable.row(this).data();
+            showCredentialEditModal(data[0], data[7], data[6]);
+        });
+
+
 
         var targettable = $('#targetTable').DataTable({
             "paging": false,
@@ -380,6 +386,12 @@ function initializeGUI() {
             }
         });
 
+        $('#targetTable tbody').on('dblclick', 'tr', function() {
+            var data = targettable.row(this).data();
+            showTargetEditModal(data[0], data[5], data[4]);
+        });
+
+
         var proxytable = $('#proxyTable').DataTable({
             "paging": false,
             "info": false,
@@ -412,6 +424,10 @@ function initializeGUI() {
                 var selectedrow = proxytable.row('.selected').data();
                 createClientUpdateProxy(selectedrow[0], selectedrow[3]);
             }
+        });
+        $('#proxyTable tbody').on('dblclick', 'tr', function() {
+            var data = proxytable.row(this).data();
+            showProxyEditModal(data[0], data[2], data[3]);
         });
 
         var clienttable = $('#clientTable').DataTable({
@@ -446,6 +462,10 @@ function initializeGUI() {
                 var selectedrow = clienttable.row('.selected').data();
                 switchActiveClientTab(selectedrow[0]);
             }
+        });
+        $('#clientTable tbody').on('dblclick', 'tr', function() {
+            var data = clienttable.row(this).data();
+            showClientEditModal(data[0], data[1], data[2]);
         });
 
         // Adding default tabs
@@ -539,7 +559,10 @@ async function createNewClient() {
 
     var clienttypeelem = document.getElementById('createNewClientType');
     var clienttype = clienttypeelem.options[clienttypeelem.selectedIndex].text;
-    await octopwnCreateClient(clienttype, authproto, cid, tid, pid);
+    var res = await octopwnCreateClient(clienttype, authproto, cid, tid, pid);
+    if (res[1] != undefined) {
+        showPythonError(res[1], 'Client creation');
+    }
 }
 
 async function createNewScanner() {
@@ -558,4 +581,288 @@ async function createNewServer() {
     var servertypeelem = document.getElementById('createNewServerType');
     var servertype = servertypeelem.options[servertypeelem.selectedIndex].text;
     await octopwnCreateServer(servertype);
+}
+
+function showProxyEditModal(pid, ptype, description) {
+    $(`<div class="modal fade editObjectModal" id="editProxyModal" tabindex="-1" role="dialog" aria-labelledby="editProxyModal" aria-hidden="true" data-bs-backdrop="static">
+        <div class="modal-dialog modal-md">
+            <div class="modal-content">
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <h4 class="modal-title" id="myModalLabel">Edit Proxy</h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                
+                <!-- Modal Body -->
+                <div class="modal-body">
+                    <form class="form-horizontal">
+                        <div class="form-group">
+                            <!-- left column -->
+                            <div>
+                                <div class="form-group">
+                                    <label for="editProxyModalProxyId" class="col-sm-2 control-label">Proxy ID</label>
+                                    <div class="col-sm-8">
+                                        <input type="text" class="form-control consoleinput" id="editProxyModalProxyId" readonly value='${pid}'>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="editProxyModalProxyType" class="col-sm-2 control-label">Proxy type</label>
+                                    <div class="col-sm-8">
+                                        <input type="text" class="form-control consoleinput" id="editProxyModalProxyType" readonly value='${ptype}'>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="editProxyModalDescription" class="col-sm-2 control-label">Description</label>
+                                    <div class="col-sm-8">
+                                        <input type="text" class="form-control" id="editProxyModalDescription" value='${description}'>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Modal Footer -->
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-primary" id="addCredentialSubmit" data-bs-dismiss="modal" onclick="editProxyDescription(${pid})">Update</button>
+                        </div><!-- End Modal Footer -->
+                    </form>
+                </div> <!-- End modal body div -->
+            </div> <!-- End modal content div -->
+        </div> <!-- End modal dialog div -->
+    </div> <!-- End modal div -->`).appendTo("body").finish();
+    $('#editProxyModal').modal('show');
+}
+
+function showClientEditModal(cid, ctype, description) {
+    $(`<div class="modal fade editObjectModal" id="editClientModal" tabindex="-1" role="dialog" aria-labelledby="editClientModal" aria-hidden="true" data-bs-backdrop="static">
+        <div class="modal-dialog modal-md">
+            <div class="modal-content">
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <h4 class="modal-title" id="myModalLabel">Edit Client</h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                
+                <!-- Modal Body -->
+                <div class="modal-body">
+                    <form class="form-horizontal">
+                        <div class="form-group">
+                            <!-- left column -->
+                            <div>
+                                <div class="form-group">
+                                    <label for="editClientModalClientId" class="col-sm-2 control-label">Client ID</label>
+                                    <div class="col-sm-8">
+                                        <input type="text" class="form-control consoleinput" id="editClientModalClientId" readonly value='${cid}'>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="editClientModalClientType" class="col-sm-2 control-label">Client type</label>
+                                    <div class="col-sm-8">
+                                        <input type="text" class="form-control consoleinput" id="editClientModalClientType" readonly value='${ctype}'>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="editClientModalDescription" class="col-sm-2 control-label">Description</label>
+                                    <div class="col-sm-8">
+                                        <input type="text" class="form-control" id="editClientModalDescription" value='${description}'>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Modal Footer -->
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-primary" id="addCredentialSubmit" data-bs-dismiss="modal" onclick="editClientDescription(${cid})">Update</button>
+                        </div><!-- End Modal Footer -->
+                    </form>
+                </div> <!-- End modal body div -->
+            </div> <!-- End modal content div -->
+        </div> <!-- End modal dialog div -->
+    </div> <!-- End modal div -->`).appendTo("body").finish();
+    $('#editClientModal').modal('show');
+}
+
+function showCredentialEditModal(cid, ctype, description) {
+    $(`<div class="modal fade editObjectModal" id="editCredentialModal" tabindex="-1" role="dialog" aria-labelledby="editCredentialModal" aria-hidden="true" data-bs-backdrop="static">
+        <div class="modal-dialog modal-md">
+            <div class="modal-content">
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <h4 class="modal-title" id="myModalLabel">Edit Credential</h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                
+                <!-- Modal Body -->
+                <div class="modal-body">
+                    <form class="form-horizontal">
+                        <div class="form-group">
+                            <!-- left column -->
+                            <div>
+                                <div class="form-group">
+                                    <label for="editCredentialModalCredentialId" class="col-sm-2 control-label">Credential ID</label>
+                                    <div class="col-sm-8">
+                                        <input type="text" class="form-control consoleinput" id="editCredentialModalCredentialId" readonly value='${cid}'>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="editCredentialModalCredentialType" class="col-sm-2 control-label">Credential</label>
+                                    <div class="col-sm-8">
+                                        <input type="text" class="form-control consoleinput" id="editCredentialModalCredentialType" readonly value='${ctype}'>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="editCredentialModalCredentialDescription" class="col-sm-2 control-label">Description</label>
+                                    <div class="col-sm-8">
+                                        <input type="text" class="form-control" id="editCredentialModalCredentialDescription" value='${description}'>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Modal Footer -->
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-primary" id="editCredentialSubmit" data-bs-dismiss="modal" onclick="editCredentialDescription(${cid})">Update</button>
+                        </div><!-- End Modal Footer -->
+                    </form>
+                </div> <!-- End modal body div -->
+            </div> <!-- End modal content div -->
+        </div> <!-- End modal dialog div -->
+    </div> <!-- End modal div -->`).appendTo("body").finish();
+    $('#editCredentialModal').modal('show');
+}
+
+
+function showTargetEditModal(cid, ctype, description) {
+    $(`<div class="modal fade editObjectModal" id="editTargetModal" tabindex="-1" role="dialog" aria-labelledby="editTargetModal" aria-hidden="true" data-bs-backdrop="static">
+        <div class="modal-dialog modal-md">
+            <div class="modal-content">
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <h4 class="modal-title" id="myModalLabel">Edit Target</h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                
+                <!-- Modal Body -->
+                <div class="modal-body">
+                    <form class="form-horizontal">
+                        <div class="form-group">
+                            <!-- left column -->
+                            <div>
+                                <div class="form-group">
+                                    <label for="editTargetModalTargetId" class="col-sm-2 control-label">Target ID</label>
+                                    <div class="col-sm-8">
+                                        <input type="text" class="form-control consoleinput" id="editTargetModalTargetId" readonly value='${cid}'>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="editTargetModalTargetType" class="col-sm-2 control-label">Target</label>
+                                    <div class="col-sm-8">
+                                        <input type="text" class="form-control consoleinput" id="editTargetModalTargetType" readonly value='${ctype}'>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="editTargetModalTargetDescription" class="col-sm-2 control-label">Description</label>
+                                    <div class="col-sm-8">
+                                        <input type="text" class="form-control" id="editTargetModalTargetDescription" value='${description}'>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Modal Footer -->
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-primary" id="editTargetSubmit" data-bs-dismiss="modal" onclick="editTargetDescription(${cid})">Update</button>
+                        </div><!-- End Modal Footer -->
+                    </form>
+                </div> <!-- End modal body div -->
+            </div> <!-- End modal content div -->
+        </div> <!-- End modal dialog div -->
+    </div> <!-- End modal div -->`).appendTo("body").finish();
+    $('#editTargetModal').modal('show');
+}
+
+
+async function editTargetDescription(cid) {
+    var description = document.getElementById('editTargetModalTargetDescription').value;
+    await octopwnChangeDescription('targ', cid, description);
+    $('#editTargetModal').modal('hide');
+    removeEditorModalMenu();
+}
+
+async function editCredentialDescription(cid) {
+    var description = document.getElementById('editCredentialModalCredentialDescription').value;
+    await octopwnChangeDescription('cred', cid, description);
+    $('#editCredentialModal').modal('hide');
+    removeEditorModalMenu();
+}
+
+async function editClientDescription(cid) {
+    var description = document.getElementById('editClientModalDescription').value;
+    await octopwnChangeDescription('cli', cid, description);
+    $('#editClientModal').modal('hide');
+    removeEditorModalMenu();
+}
+
+async function editProxyDescription(pid) {
+    var description = document.getElementById('editProxyModalDescription').value;
+    await octopwnChangeDescription('prox', pid, description);
+    $('#editProxyModal').modal('hide');
+    removeEditorModalMenu();
+}
+
+function removeEditorModalMenu() {
+    const elements = document.getElementsByClassName('editObjectModal');
+    while (elements.length > 0) {
+        elements[0].parentNode.removeChild(elements[0]);
+    }
+}
+
+function showPythonError(exc, title = '') {
+    // exc is an array with exception string and traceback string
+    $(`<div class="modal fade pythonExceptionModalClass" id="pythonExceptionModal" tabindex="-1" role="dialog" aria-labelledby="pythonExceptionModal" aria-hidden="true" data-bs-backdrop="static">
+        <div class="modal-dialog modal-md">
+            <div class="modal-content">
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <h4 class="modal-title" id="pythonExceptionModalTitle">Error :(</h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                
+                <!-- Modal Body -->
+                <div class="modal-body">
+                    <form class="form-horizontal">
+                        <div class="form-group">
+                            <!-- left column -->
+                            <div>
+                                <div class="form-group">
+                                    <label for="pythonExceptionModalException" class="col-sm-2 control-label">Exception</label>
+                                    <div class="col-sm-8">
+                                        <textarea class="consoleoutputfield" id="pythonExceptionModalException" rows=1 readonly></textarea>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="pythonExceptionModalTraceback" class="col-sm-2 control-label">Traceback</label>
+                                    <div class="col-sm-8">
+                                        <textarea class="consoleoutputfield" id="pythonExceptionModalTraceback" rows=10 readonly></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Modal Footer -->
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-primary" data-bs-dismiss="modal" onclick="removeClass('pythonExceptionModalClass')">Well..</button>
+                        </div><!-- End Modal Footer -->
+                    </form>
+                </div> <!-- End modal body div -->
+            </div> <!-- End modal content div -->
+        </div> <!-- End modal dialog div -->
+    </div> <!-- End modal div -->`).appendTo("body").finish();
+    if (title != '' && title != undefined) {
+        document.getElementById("pythonExceptionModalTitle").innerHTML = title;
+    }
+    document.getElementById("pythonExceptionModalException").innerHTML = exc[0];
+    document.getElementById("pythonExceptionModalTraceback").innerHTML = exc[1];
+    $('#pythonExceptionModal').modal('show');
+}
+
+function removeClass(classname) {
+    const elements = document.getElementsByClassName(classname);
+    while (elements.length > 0) {
+        elements[0].parentNode.removeChild(elements[0]);
+    }
 }

@@ -13,6 +13,11 @@ class Dummy:
 	def __init__(self):
 		self.completer = None
 
+def gettb4exc(exc):
+	# helping javascript to get the string representation of the traceback 
+	# when a python exception happens
+	return '\r\n'.join(traceback.format_tb(exc.__traceback__))
+
 class ScreenHandlerGoldenLayout:
 	def __init__(self):
 		self.multi_window_support = True
@@ -30,7 +35,7 @@ class ScreenHandlerGoldenLayout:
 	
 	async def print_client_msg(self, clientid:int, msg:str):
 		try:
-			window = js.document.getElementsByName(self.consoleoutput_base_id % clientid)[0]
+			window = js.document.getElementById(self.consoleoutput_base_id % clientid)
 			window.innerHTML += '%s\n' % msg
 			window.scrollTop = window.scrollHeight
 			if clientid != 0:
@@ -44,7 +49,7 @@ class ScreenHandlerGoldenLayout:
 		await self.print_client_msg(0, msg)
 
 	async def clear_main_window(self):
-		window = js.document.getElementsByName(self.consoleoutput_base_id % '0')[0]
+		window = js.document.getElementById(self.consoleoutput_base_id % '0')
 		window.innerHTML = ''
 	
 	async def client_added(self, cid, client):
@@ -129,17 +134,28 @@ class ScreenHandlerGoldenLayout:
 	async def proxy_added(self, pid, proxy):
 		"""Add a proxy entry to the proxies window"""
 		try:
-			js.AddDataTableEntryP5(
-				'#' + self.proxytable_id, 
-				str(pid), 
-				str(proxy.ip) + ':' + str(proxy.port), 
-				str(proxy.ptype),
-				str(proxy.description) if proxy.description is not None else '',
-				str(proxy.to_line())
-			)
+			if proxy.ptype != 'CHAIN':
+				js.AddDataTableEntryP5(
+					'#' + self.proxytable_id, 
+					str(pid), 
+					str(proxy.ip) + ':' + str(proxy.port), 
+					str(proxy.ptype),
+					str(proxy.description) if proxy.description is not None else '',
+					str(proxy.to_line())
+				)
+			else:
+				js.AddDataTableEntryP5(
+					'#' + self.proxytable_id, 
+					str(pid), 
+					str(','.join([str(x) for x in proxy.chain])),
+					str(proxy.ptype),
+					str(proxy.description) if proxy.description is not None else '',
+					str(proxy.to_line())
+				)
+			
 			return True, None
 		except Exception as e:
-			print(e)
+			traceback.print_exc()
 			return None, e
 
 	async def __refresh_creds(self):

@@ -98,6 +98,9 @@
                             <input type="checkbox" name="excludeEdgeList" value="trustedBy" checked> trustedBy
                         </label>
                         <label class="checkbox">
+                            <input type="checkbox" name="excludeEdgeList" value="member" checked> member
+                        </label>
+                        <label class="checkbox">
                             <input type="checkbox" name="excludeEdgeList" value="sqladmin"checked> sqladmin
                         </label>
                         <label class="checkbox">
@@ -168,7 +171,7 @@
             var res = `
                 <div id="notesdiv-${clientid}" class="textEditorClass"></div>
                 <div id="consoleoutput">
-                    <textarea id="consoleoutputfield" readonly name="consoleoutput-${clientid}" rows=10 placeholder="Command output will appear here.\nType '?' for help."></textarea>
+                    <textarea class="consoleoutputfield" readonly id="consoleoutput-${clientid}" rows=10 placeholder="Command output will appear here.\nType '?' for help."></textarea>
                 </div>
                 <div id="consoleinput">
                     <input class="consoleinputfield" type="text" list="history-${clientid}" id="consoleinputfield-${clientid}" name="consoleinput" placeholder="Enter command here" onkeydown="clientcommandexec(this, ${clientid})">
@@ -183,7 +186,7 @@
                 return generateNotesWindow(clientid);
             }
             var co = `<div id="consoleoutput">
-						<textarea id="consoleoutputfield" readonly name="consoleoutput-${clientid}" rows=30 placeholder="Command output will appear here.\nType '?' for help."></textarea>
+						<textarea class="consoleoutputfield" readonly id="consoleoutput-${clientid}" rows=30 placeholder="Command output will appear here.\nType '?' for help."></textarea>
 					</div>`;
             if (clientid == 0) {
                 mainplaceholder = `Startup steps
@@ -216,7 +219,7 @@ Hints
 				`
                 co = `
 					<div id="consoleoutput">
-						<textarea id="consoleoutputfield" readonly name="consoleoutput-${clientid}" rows=30 placeholder="${mainplaceholder}"></textarea>
+						<textarea class="consoleoutputfield" readonly id="consoleoutput-${clientid}" rows=30 placeholder="${mainplaceholder}"></textarea>
 					</div>`;
             }
             return `${co}
