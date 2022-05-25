@@ -68,7 +68,11 @@ function switchActiveClientTab(cid) {
     contentItem.tab.header.parent.setActiveContentItem(contentItem);
     if (cid == 'P') return;
     var inputbox = document.getElementById('consoleinputfield-' + cid);
-    inputbox.focus();
+    if (inputbox != undefined) {
+        inputbox.focus();
+    } else {
+        console.log("Selected window doesnt have an inputfield, nothing to focus on!");
+    }
 }
 
 async function addNewCredential() {
@@ -200,6 +204,16 @@ function startLoadingScreen() {
 }
 
 function stopLoadingScreenSuccess() {
+
+    var cmdhistory = document.getElementById('history-0');
+    var availableCommands = octopwnGetMainCommands();
+    var options = '';
+    for (let i = 0; i < availableCommands.length; i++) {
+        options += '<option value="' + availableCommands[i] + '" />';
+    }
+    cmdhistory.innerHTML = options;
+
+
     setTimeout(
         function() {
             $('#starterModal').modal('hide');
@@ -272,7 +286,7 @@ function AddDataTableEntryP6(tableid, p1, p2, p3, p4, p5, p6) {
         p4,
         p5,
         p6
-    ]).draw();
+    ]);
 }
 
 function AddDataTableEntryP7(tableid, p1, p2, p3, p4, p5, p6, p7) {
@@ -300,6 +314,11 @@ function AddDataTableEntryP8(tableid, p1, p2, p3, p4, p5, p6, p7, p8) {
         p7,
         p8
     ]).draw();
+}
+
+function RefreshDataTable(tableid) {
+    var table = $(tableid).DataTable();
+    table.draw();
 }
 
 function ClearDataTable(tableid) {
@@ -405,6 +424,12 @@ function initializeGUI() {
                     text: '+',
                     action: function(e, dt, node, config) {
                         $('#addProxyModal').modal('show');
+                    }
+                },
+                {
+                    text: '&#9939',
+                    action: function(e, dt, node, config) {
+                        showCreateProxyChainModal();
                     }
                 },
                 'copy'
@@ -865,4 +890,108 @@ function removeClass(classname) {
     while (elements.length > 0) {
         elements[0].parentNode.removeChild(elements[0]);
     }
+}
+
+
+function showCreateProxyChainModal(cid, ctype, description) {
+    removeClass('createProxyChainModalClass');
+    $(`<div class="modal fade createProxyChainModalClass" id="createProxyChainModal" tabindex="-1" role="dialog" aria-labelledby="createProxyChainModal" aria-hidden="true" data-bs-backdrop="static">
+        <div class="modal-dialog modal-md">
+            <div class="modal-content">
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <h4 class="modal-title" id="myModalLabel">Create Proxy Chain</h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                
+                <!-- Modal Body -->
+                <div class="modal-body">
+                    <form class="form-horizontal">
+                        <div class="form-group">
+                            <!-- left column -->
+                            <div>
+                                <div class="form-group">
+                                    <label for="createProxyChainModalAddChain-1" class="col-sm-2 control-label">1 st</label>
+                                    <div class="col-sm-8">
+                                        <select class="form-select" id="createProxyChainModalAddChain-1" aria-label="Default select example">
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="createProxyChainModalAddChain-1" class="col-sm-2 control-label">2 nd</label>
+                                    <div class="col-sm-8">
+                                        <select class="form-select" id="createProxyChainModalAddChain-2" aria-label="Default select example">
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="createProxyChainModalAddChain-1" class="col-sm-2 control-label">3 rd</label>
+                                    <div class="col-sm-8">
+                                        <select class="form-select" id="createProxyChainModalAddChain-3" aria-label="Default select example">
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="createProxyChainModalAddChain-1" class="col-sm-2 control-label">4 th</label>
+                                    <div class="col-sm-8">
+                                        <select class="form-select" id="createProxyChainModalAddChain-4" aria-label="Default select example">
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="createProxyChainModalAddChain-1" class="col-sm-2 control-label">5 th</label>
+                                    <div class="col-sm-8">
+                                        <select class="form-select" id="createProxyChainModalAddChain-5" aria-label="Default select example">
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Modal Footer -->
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-primary" id="addCredentialSubmit" data-bs-dismiss="modal" onclick="addProxyChain()">Create</button>
+                        </div><!-- End Modal Footer -->
+                    </form>
+                </div> <!-- End modal body div -->
+            </div> <!-- End modal content div -->
+        </div> <!-- End modal dialog div -->
+    </div> <!-- End modal div -->`).appendTo("body").finish();
+
+    var options = '<option value="-1" selected>Select if needed</option>';
+    var proxytable = $('#proxyTable').DataTable();
+    proxytable.rows().every(function(rowIdx, tableLoop, rowLoop) {
+        var data = this.data();
+        if (data[2] != 'CHAIN') {
+            options += '<option value="' + data[0] + '">' + data[4] + '</option>';
+        }
+
+    });
+
+    let optsel = document.getElementById(`createProxyChainModalAddChain-1`);
+    optsel.innerHTML = '<option value="0" selected>WSNET</option>';
+
+
+    for (let i = 2; i < 6; i++) {
+        let optsel = document.getElementById(`createProxyChainModalAddChain-${i}`);
+        optsel.innerHTML = options;
+    }
+
+
+    $('#createProxyChainModal').modal('show');
+}
+
+async function addProxyChain() {
+    var pids = []
+    for (let i = 1; i < 6; i++) {
+        let optobj = document.getElementById(`createProxyChainModalAddChain-${i}`);
+        var optidx = optobj.options[optobj.selectedIndex].value;
+        if (optidx != '-1') {
+            pids.push(optidx);
+        }
+    }
+    if (pids.length > 1) {
+        await octopwnCreateNewChain(pids);
+    }
+    $('#createProxyChainModal').modal('hide');
+    removeClass('createProxyChainModalClass');
 }

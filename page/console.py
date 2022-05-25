@@ -107,9 +107,10 @@ class ScreenHandlerGoldenLayout:
 
 	async def __refresh_targets(self):
 		await asyncio.sleep(1)
-		js.ClearDataTable('#' + self.targetstable_id)
-		for tid in self.octopwn.targets:
-			await self.target_added(tid, self.octopwn.targets[tid])
+		js.RefreshDataTable('#' + self.targetstable_id)
+		#js.ClearDataTable('#' + self.targetstable_id)
+		#for tid in self.octopwn.targets:
+		#	await self.target_added(tid, self.octopwn.targets[tid])
 		self.targetrefresh_task = None
 
 	async def refresh_targets(self):

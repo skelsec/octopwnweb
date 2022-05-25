@@ -105,6 +105,43 @@ const loadPackages = (pyodide) => {
                 app.destroy();
             }
 
+            octopwnGetMainCommands = () => {
+                let app = pyodide.globals.get('octopwnApp');
+                var availableCommandsProxy = app.command_list();
+                var availableCommands = availableCommandsProxy.toJs();
+                availableCommandsProxy.destroy();
+                app.destroy();
+                return availableCommands;
+            }
+
+            octopwnCreateNewChain = async(pids) => {
+                let app = pyodide.globals.get('octopwnApp');
+                var resproxy = await app.do_createchain();
+                var res = resproxy.toJs();
+                resproxy.destroy();
+                if (res[3] != undefined) {
+                    let excstr = res[3].toString();
+                    let tbformat = pyodide.globals.get('gettb4exc');
+                    let traceback = tbformat(res[3]);
+                    exc = [excstr, traceback];
+                    showPythonError(exc, 'Creating Chain Error');
+                } else {
+                    for (let i = 0; i < pids.length; i++) {
+                        let addresproxy = await app.do_addproxychain(res[0], pids[i]);
+                        let addres = addresproxy.toJs();
+                        addresproxy.destroy();
+                        if (addres[1] != undefined) {
+                            let excstr = addres[3].toString();
+                            let tbformat = pyodide.globals.get('gettb4exc');
+                            let traceback = tbformat(addres[3]);
+                            exc = [excstr, traceback];
+                            showPythonError(exc, 'Adding Proxy to Chain Error');
+                        }
+                    }
+                }
+                app.destroy();
+            }
+
             loadingScreenMessage('Everything is loaded and running OK!');
             stopLoadingScreenSuccess();
         });

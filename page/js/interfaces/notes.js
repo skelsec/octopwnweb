@@ -25,7 +25,6 @@ async function createEditor(clientid) {
 async function getInitialContent(clientid) {
     // fetching the content of the notes object
     // it is used for restoring data after a reload
-    console.log(clientid);
     var client = OCTOPWN_CLIENT_LOOKUP[clientid];
     var x = await client.do_getcontent(false);
     var res = x.toJs();

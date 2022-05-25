@@ -7,29 +7,27 @@ var scanner_websocket_lookup = {};
 
 
 async function scannerWebSocketMessageHandler(event) {
-    var data = await event.data.arrayBuffer();
-    var uint8View = new Uint8Array(data);
+    var uint8View = new Uint8Array(event.data);
     var client_id = uint8View.slice(6, 22);
 
     if (scanner_websocket_lookup.hasOwnProperty(client_id)) {
-        scanner_websocket_lookup[client_id]['onmessage'](event);
+        await scanner_websocket_lookup[client_id]['onmessage'].put(event.data);
     } else {
         console.log("Scanner data arrived for unknown client_id " + client_id);
     }
-
 }
 
 function scannerWebSocketOnopen(event) {
     scanner_websocket_open = true;
     for (const [connection_id, handlers] of Object.entries(scanner_websocket_lookup)) {
-        handlers['onopen'](event);
+        handlers['onopen'].set();
     }
 }
 
 function scannerWebSocketOnclosed(event) {
     scanner_websocket_open = false;
     for (const [connection_id, handlers] of Object.entries(scanner_websocket_lookup)) {
-        handlers['onclosed'](event);
+        handlers['onclosed'].set();
     }
 }
 
@@ -46,12 +44,13 @@ function registerScannerWebSocket(url, onopen_cb, onmessage_cb, onclosed_cb, con
             scanner_websocket.onmessage = async function(event) {
                 await scannerWebSocketMessageHandler(event);
             };
+            scanner_websocket.binaryType = "arraybuffer";
         }
         scanner_websocket_lookup[connection_id] = {};
         scanner_websocket_lookup[connection_id]['onopen'] = onopen_cb;
         scanner_websocket_lookup[connection_id]['onmessage'] = onmessage_cb;
         scanner_websocket_lookup[connection_id]['onclosed'] = onclosed_cb;
-        if (scanner_websocket_open) onopen_cb(true);
+        if (scanner_websocket_open) onopen_cb.set();
         return 0;
     } catch (error) {
         console.error(error);
