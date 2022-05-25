@@ -1,0 +1,8 @@
+stages:          # List of stages for jobs, and their order of execution
+  - deploy
+
+deploy-job:      # This job runs in the deploy stage.
+  stage: deploy  # It only runs when *both* jobs in the test stage complete successfully.
+  script:
+    - aws configure set region us-east-1
+    - aws s3 cp /page/* s3://$S3_BUCKET/
