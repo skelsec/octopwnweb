@@ -4,11 +4,11 @@
 <title>OctoPwn</title>
 
 <head>
-
     <link type="text/css" rel="stylesheet" href="/css/goldenlayout-base.css" />
     <link type="text/css" rel="stylesheet" href="/css/goldenlayout-dark-theme.css" />
     <link type="text/css" rel="stylesheet" href="/css/jquery.terminal.min.css" />
     <link type="text/css" rel="stylesheet" href="/css/bootstrap.5.0.2.min.css" />
+    <link type="text/css" rel="stylesheet" href="/assets/fontawesome/css/all.css" />
     <link type="text/css" rel="stylesheet" href="/js/datatables/datatables.min.css" />
     <link type="text/css" rel="stylesheet" href="/css/vis.min.css" />
     <link type="text/css" rel="stylesheet" href="/css/vis-network.min.css" />
@@ -23,11 +23,11 @@
     <script type="text/javascript" src="/js/marked.js"></script>
     <script type="text/javascript" src="/js/goldenlayout.min.js"></script>
     <script type="text/javascript" src="/js/browserfs.min.js"></script>
-    <script type="text/javascript" src="/js/filedrop.js"></script>
     <script type="text/javascript" src="/js/vis.min.js"></script>
     <script type="text/javascript" src="/js/vis-network.min.js"></script>
 
-    <script type="text/javascript" src="/js/interfaces/file.js"></script>
+    <script type="text/javascript" src="/js/interfaces/filebrowser.js"></script>
+    <script type="text/javascript" src="/js/interfaces/smbfilebrowser.js"></script>
     <script type="text/javascript" src="/js/interfaces/gui.js"></script>
     <script type="text/javascript" src="/js/interfaces/notes.js"></script>
     <script type="text/javascript" src="/js/interfaces/network.js"></script>
@@ -373,15 +373,6 @@ Hints
                             "isClosable": false,
                             "reorderEnabled": true,
                             "title": "FILES"
-                        }, {
-                            "type": "component",
-                            "componentName": "filesDragDropWindowComponent",
-                            "componentState": {
-                                "label": "uploadFilesWindow"
-                            },
-                            "isClosable": false,
-                            "reorderEnabled": true,
-                            "title": "UPLOAD"
                         }, ]
                     }, {
                         "type": "row",
@@ -677,24 +668,9 @@ Hints
         });
         myLayout.registerComponent('filesWindowComponent', function(container, componentState) {
             container.getElement().html(`
-                <div>
-                    <div class="table-wrapper">
-                        <ul id="uploadedFiles" class="listtable"></ul>
-                    </div>
-                </div>`);
-        });
-        myLayout.registerComponent('filesDragDropWindowComponent', function(container, componentState) {
-            container.getElement().html(`
-                <div>
-                    <div id="file-drop-area">
-                        <form class="fileUploadForm">
-                            <p>Upload multiple files with the file dialog or by dragging and dropping files onto this tab.</p>
-                            <input type="file" class="btn btn-primary fileuploadbutton" id="fileUploadButtonElem" multiple accept="*" onchange="handleFiles(this.files)">
-                            <label class="btn btn-primary fileuploadbutton" for="fileUploadButtonElem">Select some files</label></input>
-                        </form>
-                    </div>
-                </div>
-				`);
+                    <div class="table-wrapper defaultColors" id="fileBrowserDiv">
+                        <table class="listtable" id="fileBrowserTable"></table>
+                    </div>`);
         });
         myLayout.registerComponent('proxyWindowComponent', function(container, componentState) {
             container.getElement().html(`

@@ -12,6 +12,7 @@ function addNewClientWindow(cid, cliname, description, client) {
     ///https://github.com/golden-layout/golden-layout/issues/30
     var windowtype = 'client';
     if (cliname.search('NOTES') != -1) windowtype = 'notes';
+    if (cliname.search('SMB') != -1) windowtype = 'smb';
     var newItemConfig = {
         id: 'client-tab-' + cid,
         title: cliname,
@@ -51,6 +52,9 @@ function addNewClientWindow(cid, cliname, description, client) {
     ]).draw();
     if (windowtype == 'notes') {
         createEditor(cid);
+    }
+    if (windowtype == 'smb') {
+        createSMBFileSystem(cid, client);
     }
 }
 

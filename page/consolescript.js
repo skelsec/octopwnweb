@@ -27,8 +27,8 @@ const loadPackages = (pyodide) => {
 
         loadingScreenMessage("Initializing GUI...");
         initializeGUI();
-        loadingScreenMessage("Setting up file drop area...");
-        setupFileDrop("file-drop-area");
+        loadingScreenMessage("Setting up file browser...");
+        setupFileBrowser("fileBrowserTable", "fileBrowserDiv");
         loadingScreenMessage('Starting Python console...');
         startPythonConsole("#pyConsoleDiv", pyodide);
 
@@ -36,9 +36,6 @@ const loadPackages = (pyodide) => {
         pyodide.runPythonAsync(pyCode).then(() => {
             loadingScreenMessage('OctoPwn bootstrapped OK!');
             //document.getElementById("statusButton").value = "RUNNING OK";
-            //starting auto file refresh
-            loadingScreenMessage('Refreshing file list...');
-            autoRefreshFileList();
 
             loadingScreenMessage('Setting up JS<==>Py proxy functions...');
             runCmd = async(command, clientid) => {

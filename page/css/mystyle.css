@@ -89,51 +89,6 @@ a:active {
     color: rgb(52, 133, 63);
 }
 
-.my-form {
-    margin-bottom: 10px;
-}
-
-#file-drop-area {
-    border: 2px dashed rgb(32, 73, 5);
-    border-radius: 23px;
-    width: auto;
-    height: 168px;
-    margin: 10px;
-    padding: 30px;
-}
-
-#file-drop-area.highlight {
-    border-color: rgb(84, 240, 11);
-}
-
-.fileuploadbutton {
-    display: inline-block;
-    padding: 10px;
-    background: #ccc;
-    cursor: pointer;
-    border-radius: 5px;
-    border: 1px solid #ccc;
-    position: absolute;
-    top: 125px;
-    left: 174px;
-    margin-right: -25%;
-}
-
-.fileuploadbutton:hover {
-    background: #ddd;
-}
-
-.fileUploadForm {
-    font-size: large;
-    color: #45a636;
-}
-
-#fileUploadButtonElem {
-    height: 1px;
-    width: 1px;
-    display: none;
-}
-
 .terminal {
     --size: 1.5;
     --color: rgba(255, 255, 255, 0.8);
@@ -297,4 +252,10 @@ input[type=file]:focus {
 
 .hidden {
     display: none;
+}
+
+#fileBrowserTable.dataTable td {
+    padding: 3px 10px;
+    width: 1px;
+    white-space: nowrap;
 }
