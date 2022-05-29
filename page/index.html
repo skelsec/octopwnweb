@@ -28,6 +28,7 @@
 
     <script type="text/javascript" src="/js/interfaces/filebrowser.js"></script>
     <script type="text/javascript" src="/js/interfaces/smbfilebrowser.js"></script>
+    <script type="text/javascript" src="/js/interfaces/ldapfilebrowser.js"></script>
     <script type="text/javascript" src="/js/interfaces/gui.js"></script>
     <script type="text/javascript" src="/js/interfaces/notes.js"></script>
     <script type="text/javascript" src="/js/interfaces/network.js"></script>
@@ -357,13 +358,13 @@ Hints
                             "title": "CREDENTIALS"
                         }]
                     }, {
-                        "type": "row",
+                        "type": "stack",
                         "header": {},
-                        "isClosable": true,
+                        "isClosable": false,
                         "reorderEnabled": true,
                         "title": "",
                         "activeItemIndex": 0,
-                        "height": 45,
+                        "height": 55,
                         "content": [{
                             "type": "component",
                             "componentName": "filesWindowComponent",
@@ -373,6 +374,15 @@ Hints
                             "isClosable": false,
                             "reorderEnabled": true,
                             "title": "FILES"
+                        }, {
+                            "type": "component",
+                            "componentName": "filesProgressWindowComponent",
+                            "componentState": {
+                                "label": "filesProgressWindow"
+                            },
+                            "isClosable": false,
+                            "reorderEnabled": true,
+                            "title": "DOWNLOADS"
                         }, ]
                     }, {
                         "type": "row",
@@ -671,6 +681,10 @@ Hints
                     <div class="table-wrapper defaultColors" id="fileBrowserDiv">
                         <table class="listtable" id="fileBrowserTable"></table>
                     </div>`);
+        });
+        myLayout.registerComponent('filesProgressWindowComponent', function(container, componentState) {
+            container.getElement().html(`
+                    <div id="fileBrowserProgressDiv"></div>`);
         });
         myLayout.registerComponent('proxyWindowComponent', function(container, componentState) {
             container.getElement().html(`

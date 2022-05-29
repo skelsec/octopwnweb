@@ -259,3 +259,24 @@ input[type=file]:focus {
     width: 1px;
     white-space: nowrap;
 }
+
+.progress-custom {
+    display: table;
+    width: 100%;
+    margin-bottom: 20px;
+    /*optionally same aside margin bottom of progress class*/
+}
+
+.progress-custom .progress {
+    margin-bottom: 0;
+    display: table-cell;
+    vertical-align: middle;
+}
+
+.progress-custom .progress-title {
+    display: table-cell;
+    vertical-align: middle;
+    /*width: 1%;
+    padding: 0 4px;
+    /*optionally*/
+}

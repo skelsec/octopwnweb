@@ -1,0 +1,13 @@
+version = "0.0.1"
+work_dir = "./"
+
+[credentials]
+
+[targets]
+
+[proxies]
+
+[clients]
+
+[messagebuffers]
+0 = ""

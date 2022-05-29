@@ -1,5 +1,13 @@
 FILEBROWSER_LOOKUP = {};
 
+function appendHtml(el, str) {
+    var div = document.createElement('div');
+    div.innerHTML = str;
+    while (div.children.length > 0) {
+        el.appendChild(div.children[0]);
+    }
+}
+
 var extensionsMap = {
     "zip": "fa-file-archive",
     "gz": "fa-file-archive",
@@ -94,19 +102,23 @@ function FSEntry(fstablename, name, fullpath, root, ext, isdir, size, creationda
         });
     }
 
+    this.sortid = function() {
+        if (this._name == '..') return '0';
+        if (this._isdir) return 'D:' + this.htmlEncode(this._name.toUpperCase());
+        else return 'F:' + this.htmlEncode(this._name.toUpperCase());
+    }
+
     this.name = function() {
 
         if (this._isdir) {
-            return `<a><i class='fas fa-folder'></i>&nbsp;${this.htmlEncode(this._name)}</a>`;
+            return `<p hidden>${this.sortid()}</p><a><i class='fas fa-folder'></i>&nbsp;${this.htmlEncode(this._name)}</a>`;
         } else {
-            return `<a><i class='fas ${getFileIcon(this._ext)}'></i>&nbsp; ${this.htmlEncode(this._name)}</a>`;
+            return `<p hidden>${this.sortid()}</p><a><i class='fas ${getFileIcon(this._ext)}'></i>&nbsp; ${this.htmlEncode(this._name)}</a>`;
         }
     };
 
     this.fullpath = function() {
         if (this._name == '..') {
-            //console.log('this._fullpath: "' + this._fullpath + '"');
-            //console.log('this._mountpoint: "' + this._mountpoint + '"');
             if (this._fullpath == '') return '/';
             if (this._fullpath == '/') return '/' + this._mountpoint;
             return '/' + this._mountpoint + '/' + this._fullpath;
@@ -166,12 +178,10 @@ function BrowserFSFileSystem(name) {
      * Downloads the file from BrowserFS
      * */
 
-    this.downloadFile = async function(path) {
+    this.downloadFile = async function(pid, filepath, fileName, fileDownloadProgress, fileDownloadFinished) {
         var fs = BrowserFS.BFSRequire('fs');
-        let data = fs.readFileSync(path);
-        const blob = new Blob([data]);
-        return blob;
-
+        let data = fs.readFileSync(filepath);
+        fileDownloadFinished(pid, fileName, data, null);
     }
 
     this.changeDirectory = async function(path) {
@@ -235,9 +245,11 @@ function BrowserFSFileSystem(name) {
         return results;
     }
 
-    this.createDirectory = async function(path) {
+    this.createDirectory = async function(path, dirname) {
+        if (path.charAt(path.length - 1) != '/') path = path + '/';
+        let fullpath = path + dirname;
         let fs = BrowserFS.BFSRequire('fs');
-        await fs.mkdir(path);
+        await fs.mkdir(fullpath);
 
     }
 
@@ -257,9 +269,17 @@ function BrowserFSFileSystem(name) {
 
 function FileBrowser(tablename) {
     this.tablename = tablename;
+    this.progressdiv = null;
     this.currentPath = '/';
     this.defaultUploadPath = '/browserfs/volatile/';
     this.fileSystems = {};
+    this.progressId = 0;
+
+    this.getProgressId = function() {
+        let t = this.progressId;
+        this.progressId += 1;
+        return t;
+    }
 
     this.htmlEncode = function(str) {
         return String(str).replace(/[^\w. ]/gi, function(c) {
@@ -284,36 +304,77 @@ function FileBrowser(tablename) {
         await this.refresh();
     }
 
+    this.fileDownloadProgress = function(pid, total, consumed) {
+        let percentage = ((consumed / total) * 100).toFixed(2);
+        let pbar = document.getElementById(`pbar-${tablename}-${pid}`);
+        if (pbar != undefined) {
+            pbar.style.width = percentage.toString() + '%';
+            pbar.setAttribute('aria-valuenow', percentage);
+            let title = document.getElementById(`pbarTitleProgress-${tablename}-${pid}`);
+            title.innerText = percentage.toString() + ' %';
+        }
+    }
+
+    this.fileDownloadFinished = function(pid, fileName, data, err) {
+        if (err == null || err == undefined) {
+            const blob = new Blob([data]);
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', fileName);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            return;
+        }
+        console.log('File download stopped with error!');
+
+    }
+
     this.downloadFile = async function(path) {
         let mountpoint = path.substring(0, path.indexOf('/', 1)).substring(1);
         let filepath = path.substring(1 + mountpoint.length);
         let fileName = path.substring(path.lastIndexOf('/'));
         let fs = this.fileSystems[mountpoint];
-        const blob = await fs.downloadFile(filepath);
-        const link = document.createElement('a');
-        const url = URL.createObjectURL(blob);
-        link.setAttribute('href', url);
-        link.setAttribute('download', fileName);
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+
+        // adding pbar HTML element
+        let pid = this.getProgressId();
+        let progressdiv = document.getElementById(this.progressdiv);
+        let pbarcode = `
+        <div class="row">
+            <div class="col-xs-6">
+                <div class="progress-custom">
+                    <div class="progress-title defaultColors" id="pbarTitleText-${tablename}-${pid}">
+                        ${fileName}
+                    </div>
+                    <div class="progress" id="pbarDiv-${tablename}-${pid}">
+                        <div id="pbar-${tablename}-${pid}" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" background-color="green" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                            <span id="pbarTitleProgress-${tablename}-${pid}" style="display:inline;">0%</span>
+                        </div>
+                    </div>
+                    
+                </div>
+            </div>
+        </div>`;
+        appendHtml(progressdiv, pbarcode);
+        // starting the file download
+        await fs.downloadFile(pid, filepath, fileName, this.fileDownloadProgress, this.fileDownloadFinished);
+
     }
 
     this.createDirectoryHTML = async function() {
         let dirname = document.getElementById(`createFolder-${this.tablename}`).value;
-        let path = this.currentPath + dirname;
-        await this.createDirectory(path);
+        await this.createDirectory(this.currentPath, dirname);
     }
 
-    this.createDirectory = async function(path) {
+    this.createDirectory = async function(path, dirname) {
         try {
             let mountpoint = path.substring(0, path.indexOf('/', 1)).substring(1);
             let dirpath = path.substring(1 + mountpoint.length);
             let fs = this.fileSystems[mountpoint];
-            await fs.createDirectory(dirpath);
+            await fs.createDirectory(dirpath, dirname);
             await this.refresh();
-            //refresh here?
         } catch (e) {
             console.log(e);
         }
@@ -378,16 +439,27 @@ function FileBrowser(tablename) {
             fs = this.fileSystems[path];
             data = await fs.changeDirectory('/');
         } else {
+            console.log('CD path: ' + path);
+            console.log(this.fileSystems);
             if (path.substring(0, 2) == '//') {
                 path = path.substring(1, path.length);
             }
-            if (path.charAt(path.length - 1) != '/' && path != '/') {
-                path = path + '/';
+            // if (path.charAt(path.length - 1) != '/' && path != '/') {
+            //     path = path + '/';
+            // }
+
+            console.log('CD path2: ' + path);
+            mountpoint = path.substring(1); //path.slice(1, path.slice(1, path.length).indexOf('/') + 1);
+            if (mountpoint.indexOf('/') != -1) {
+                mountpoint = mountpoint.substring(0, mountpoint.indexOf('/'));
             }
-            mountpoint = path.slice(1, path.slice(1, path.length).indexOf('/') + 1);
-            path = path.slice(mountpoint.length);
-            path = path.slice(path.indexOf('/'), path.length);
+            path = path.slice(mountpoint.length + 1);
+            if (path == '') path = '/';
+            //path = path.slice(path.indexOf('/'), path.length);
             fs = this.fileSystems[mountpoint];
+            console.log('mountpoint: ' + mountpoint);
+            console.log(path);
+
             data = await fs.changeDirectory(path);
         }
 
@@ -408,6 +480,11 @@ function FileBrowser(tablename) {
             table.fnAddData(value);
         });
     };
+
+    this.setupProgress = function(divname) {
+        this.progressdiv = divname;
+
+    }
 
 
     this.setupFileDrop = function(divname) {
@@ -527,7 +604,7 @@ function FileBrowser(tablename) {
         },
         "columns": [
             //{ "title": "", "data": null, "orderable": false, 'checkboxes': { 'selectRow': true }, width: "5%", 'class': 'details-control' },
-            { "title": "Name", "data": null, "orderable": true, "render": 'name', width: "40%" },
+            { "title": "Name", "data": null, "orderable": true, "render": 'name', width: "40%", "type": 'fsentry' },
             { "title": "Size", "data": null, "orderable": true, "render": 'size', width: "10%" },
             { "title": "Created", "data": null, "orderable": true, "render": 'creationdate' },
             { "title": "Modified", "data": null, "orderable": true, "render": 'modificationdate' },
@@ -570,7 +647,7 @@ function FileBrowser(tablename) {
                 `);
                 $("#createDirectoryButton").click(function() {
                     let fb = FILEBROWSER_LOOKUP[tablename];
-                    fb.createDirectoryHTML()
+                    fb.createDirectoryHTML();
                 });
 
                 $(`#fileUploadButton-${tablename}`).click(function() {
@@ -590,17 +667,43 @@ function FileBrowser(tablename) {
         }
     };
 
-    $('#' + this.tablename).DataTable(options);
+    let table = $('#' + this.tablename).DataTable(options);
     FILEBROWSER_LOOKUP[tablename] = this;
 };
+
+jQuery.extend(jQuery.fn.dataTableExt.oSort, {
+
+    "fsentry-asc": function(a, b) {
+        if (a.search('<p hidden>0</p>') != -1) {
+            return -1;
+        }
+        if (a < b) {
+            return -1;
+        } else if (a > b) {
+            return 1;
+        } else {
+            return 0;
+        }
+    },
+    "fsentry-desc": function(a, b) {
+        if (a.indexOf('<p hidden>0</p>') != -1) {
+            return -1;
+        }
+        if (a > b) {
+            return -1;
+        } else if (a < b) {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+});
+
 
 function setupFileBrowser(tablename, tablediv) {
     var BFSS = new BrowserFSFileSystem('browserfs');
     let fb = new FileBrowser('fileBrowserTable');
     fb.setupFileDrop('fileBrowserDiv');
+    fb.setupProgress('fileBrowserProgressDiv');
     fb.mount(BFSS);
 }
-//var BFSS = new BrowserFSFileSystem('browserfs');
-//var fb = new FileBrowser('fileBrowserTable');
-//fb.setupFileDrop('fileBrowserDiv');
-//fb.mount(BFSS);

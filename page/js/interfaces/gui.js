@@ -13,6 +13,7 @@ function addNewClientWindow(cid, cliname, description, client) {
     var windowtype = 'client';
     if (cliname.search('NOTES') != -1) windowtype = 'notes';
     if (cliname.search('SMB') != -1) windowtype = 'smb';
+    if (cliname.search('LDAP') != -1) windowtype = 'ldap';
     var newItemConfig = {
         id: 'client-tab-' + cid,
         title: cliname,
@@ -55,6 +56,9 @@ function addNewClientWindow(cid, cliname, description, client) {
     }
     if (windowtype == 'smb') {
         createSMBFileSystem(cid, client);
+    }
+    if (windowtype == 'ldap') {
+        createLDAPFileSystem(cid, client);
     }
 }
 
