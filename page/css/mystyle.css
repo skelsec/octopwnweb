@@ -1,282 +1,333 @@
-#consoleinput {
-    margin: 20px;
-    margin-top: 0%;
-    position: sticky;
-    bottom: 0%;
-    width: inherit;
-}
-
-#consoleoutput {
-    margin: 20px;
-    margin-bottom: 0%;
-}
-
-.consoleoutputfield {
-    max-width: 100%;
-    max-height: 100%;
-    width: 100%;
-    height: 100%;
-    margin-left: auto;
-    margin-right: auto;
-    border: 1px solid #153510;
-    background-color: #1f241d;
-    font-size: large;
-    color: #45a636;
-    font-family: monospace;
-}
-
-.consoleinputfield {
-    width: 80%;
-    border: 1px solid #153510;
-    background-color: #1f241d;
-    font-size: large;
-    color: #45a636;
-    font-family: monospace;
-}
-
-.consoleinputfield:focus {
-    width: 80%;
-    border: 1px solid #153510;
-    background-color: #1f241d;
-    font-size: large;
-    color: #45a636;
-    font-family: monospace;
-}
-
-#mainmessage {
-    margin: 0px;
-    padding: 0px;
-    color: rgb(208, 208, 208);
-    background-color: rgb(23, 23, 23);
-}
-
-#startupParameterForm {
-    margin: 0px;
-    padding-left: 0px;
-    padding-top: 0px;
-    padding-bottom: 10px;
-}
-
-.listtable {
-    font-family: "Consolas, 'Courier New', monospace";
-    color: rgb(117, 182, 97);
-    margin: 5px;
-    overflow: auto;
-}
-
-a:link {
-    color: rgb(52, 133, 63);
-}
-
-
-/* visited link */
-
-a:visited {
-    color: rgb(87, 130, 93);
-}
-
-
-/* mouse over link */
-
-a:hover {
-    color: rgb(75, 172, 88);
-}
-
-
-/* selected link */
-
-a:active {
-    color: rgb(52, 133, 63);
-}
-
-.terminal {
-    --size: 1.5;
-    --color: rgba(255, 255, 255, 0.8);
-}
-
-.quickfilter {
-    background-color: #1f241d;
-    color: #45a636;
-}
-
-
-/* Making things scrollable */
-
-body .lm_content {
-    overflow-y: auto;
-}
-
-
-/* Works on Firefox */
-
-* {
-    scrollbar-width: thin;
-    scrollbar-color: #153510;
-}
-
-
-/* Works on Chrome, Edge, and Safari */
-
-*::-webkit-scrollbar {
-    width: 6px;
-}
-
-*::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-*::-webkit-scrollbar-thumb {
-    background-color: #153510;
-}
-
-.lm_header .lm_tab {
-    font-family: Arial, sans-serif;
-    font-size: 16px;
-    color: #999999;
-    background: #111111;
-    box-shadow: 2px -2px 2px rgb(0 0 0 / 30%);
-    margin-top: 0px;
-    margin-right: 2px;
-    padding-bottom: 2px;
-    padding-top: -2px;
-    padding-right: 15px;
-}
-
-.modal-header {
-    background: #222222;
-    color: #45a636;
-}
-
-.modal-dialog {
-    background: #222222;
-    color: #45a636;
-}
-
-.modal-content {
-    background: #222222;
-    color: #45a636;
-}
-
-.octoloadbutton,
-.octoloadbutton:hover,
-.octoloadbutton:focus,
-.octoloadbutton:active,
-.octoloadbutton:hover> {
-    background: #222222;
-    color: #45a636;
-}
-
-.btn-primary,
-.btn-secondary {
-    background: #183618c0;
-    color: #45a636;
-    border-color: #153510;
-}
-
-.btn-primary:hover,
-.btn-primary:focus,
-.btn-primary:active,
-.btn-primary.active,
-.btn-secondary:hover,
-.btn-secondary:focus,
-.btn-secondary:active,
-.btn-secondary.active,
-.open>.dropdown-toggle.btn-primary {
-    background: #255a25c0;
-    color: #45a636;
-    border-color: #153510;
-}
-
-.select,
-.form-select,
-[type=search],
-[type=search]:focus,
-input[type=text],
-input[type=text]:focus,
-input[type=file],
-input[type=file]:focus {
-    box-sizing: border-box;
-    background: #1c281cc0;
-    color: #45a636;
-    border-color: #153510;
-}
-
-.modaldismissButton {
-    color: #153510;
-}
-
-#credtablecontainer {
-    width: 100%;
-    color: #45a636;
-}
-
-.defaultColors {
-    color: #45a636;
-}
-
-.textEditorClass {
-    background: #ffffffff;
-}
-
-
-/* Test */
-
-.graph-nodes-rightclick-menu {
-    display: none;
-    z-index: 1000;
-    position: absolute;
-    overflow: hidden;
-    border: 1px solid #CCC;
-    white-space: nowrap;
-    font-family: sans-serif;
-    background: #FFF;
-    color: #333;
-    border-radius: 5px;
-    padding: 0;
-}
-
-
-/* Each of the items in the list */
-
-.graph-nodes-rightclick-menu li {
-    padding: 8px 12px;
-    cursor: pointer;
-    list-style-type: none;
-    transition: all .3s ease;
-    user-select: none;
-}
-
-.graph-nodes-rightclick-menu li:hover {
-    background-color: #DEF;
-}
-
-.hidden {
-    display: none;
-}
-
-#fileBrowserTable.dataTable td {
-    padding: 3px 10px;
-    width: 1px;
-    white-space: nowrap;
-}
-
-.progress-custom {
-    display: table;
-    width: 100%;
-    margin-bottom: 20px;
-    /*optionally same aside margin bottom of progress class*/
-}
-
-.progress-custom .progress {
-    margin-bottom: 0;
-    display: table-cell;
-    vertical-align: middle;
-}
-
-.progress-custom .progress-title {
-    display: table-cell;
-    vertical-align: middle;
-    /*width: 1%;
+                                        #consoleinput {
+                                        margin: 20px;
+                                        margin-top: 0%;
+                                        position: sticky;
+                                        bottom: 0%;
+                                        width: inherit;
+                                    }
+                                    
+                                    #consoleoutput {
+                                        margin: 20px;
+                                        margin-bottom: 0%;
+                                    }
+                                    
+                                    .consoleoutputfield {
+                                        max-width: 100%;
+                                        max-height: 100%;
+                                        width: 100%;
+                                        height: 100%;
+                                        margin-left: auto;
+                                        margin-right: auto;
+                                        border: 1px solid #153510;
+                                        background-color: #1f241d;
+                                        font-size: large;
+                                        color: #45a636;
+                                        font-family: monospace;
+                                    }
+                                    
+                                    .consoleinputfield {
+                                        width: 80%;
+                                        border: 1px solid #153510;
+                                        background-color: #1f241d;
+                                        font-size: large;
+                                        color: #45a636;
+                                        font-family: monospace;
+                                    }
+                                    
+                                    .consoleinputfield:focus {
+                                        width: 80%;
+                                        border: 1px solid #153510;
+                                        background-color: #1f241d;
+                                        font-size: large;
+                                        color: #45a636;
+                                        font-family: monospace;
+                                    }
+                                    
+                                    #mainmessage {
+                                        margin: 0px;
+                                        padding: 0px;
+                                        color: rgb(208, 208, 208);
+                                        background-color: rgb(23, 23, 23);
+                                    }
+                                    
+                                    #startupParameterForm {
+                                        margin: 0px;
+                                        padding-left: 0px;
+                                        padding-top: 0px;
+                                        padding-bottom: 10px;
+                                    }
+                                    
+                                    .listtable {
+                                        font-family: "Consolas, 'Courier New', monospace";
+                                        color: rgb(117, 182, 97);
+                                        margin: 5px;
+                                        overflow: auto;
+                                    }
+                                    
+                                    a:link {
+                                        color: rgb(52, 133, 63);
+                                    }
+                                    /* visited link */
+                                    
+                                    a:visited {
+                                        color: rgb(87, 130, 93);
+                                    }
+                                    /* mouse over link */
+                                    
+                                    a:hover {
+                                        color: rgb(75, 172, 88);
+                                    }
+                                    /* selected link */
+                                    
+                                    a:active {
+                                        color: rgb(52, 133, 63);
+                                    }
+                                    
+                                    .terminal {
+                                        --size: 1.5;
+                                        --color: rgba(255, 255, 255, 0.8);
+                                    }
+                                    
+                                    .quickfilter {
+                                        background-color: #1f241d;
+                                        color: #45a636;
+                                    }
+                                    /* Making things scrollable */
+                                    
+                                    body .lm_content {
+                                        overflow-y: auto;
+                                    }
+                                    /* Works on Firefox */
+                                    
+                                    * {
+                                        scrollbar-width: thin;
+                                        scrollbar-color: #153510;
+                                    }
+                                    /* Works on Chrome, Edge, and Safari */
+                                    
+                                    *::-webkit-scrollbar {
+                                        width: 6px;
+                                    }
+                                    
+                                    *::-webkit-scrollbar-track {
+                                        background: transparent;
+                                    }
+                                    
+                                    *::-webkit-scrollbar-thumb {
+                                        background-color: #153510;
+                                    }
+                                    
+                                    .lm_header .lm_tab {
+                                        font-family: Arial, sans-serif;
+                                        font-size: 16px;
+                                        color: #999999;
+                                        background: #111111;
+                                        box-shadow: 2px -2px 2px rgb(0 0 0 / 30%);
+                                        margin-top: 0px;
+                                        margin-right: 2px;
+                                        padding-bottom: 2px;
+                                        padding-top: -2px;
+                                        padding-right: 15px;
+                                    }
+                                    
+                                    .modal-header {
+                                        background: #222222;
+                                        color: #45a636;
+                                    }
+                                    
+                                    .modal-dialog {
+                                        background: #222222;
+                                        color: #45a636;
+                                    }
+                                    
+                                    .modal-content {
+                                        background: #222222;
+                                        color: #45a636;
+                                    }
+                                    
+                                    .octoloadbutton,
+                                    .octoloadbutton:hover,
+                                    .octoloadbutton:focus,
+                                    .octoloadbutton:active,
+                                    .octoloadbutton:hover> {
+                                        background: #222222;
+                                        color: #45a636;
+                                    }
+                                    
+                                    .btn-primary,
+                                    .btn-secondary {
+                                        background: #183618c0;
+                                        color: #45a636;
+                                        border-color: #153510;
+                                    }
+                                    
+                                    .btn-primary:hover,
+                                    .btn-primary:focus,
+                                    .btn-primary:active,
+                                    .btn-primary.active,
+                                    .btn-secondary:hover,
+                                    .btn-secondary:focus,
+                                    .btn-secondary:active,
+                                    .btn-secondary.active,
+                                    .open>.dropdown-toggle.btn-primary {
+                                        background: #255a25c0;
+                                        color: #45a636;
+                                        border-color: #153510;
+                                    }
+                                    
+                                    .select,
+                                    .form-select,
+                                    [type=search],
+                                    [type=search]:focus,
+                                    input[type=text],
+                                    input[type=text]:focus,
+                                    input[type=file],
+                                    input[type=file]:focus {
+                                        box-sizing: border-box;
+                                        background: #1c281cc0;
+                                        color: #45a636;
+                                        border-color: #153510;
+                                    }
+                                    
+                                    .modaldismissButton {
+                                        color: #153510;
+                                    }
+                                    
+                                    #credtablecontainer {
+                                        width: 100%;
+                                        color: #45a636;
+                                    }
+                                    
+                                    .defaultColors {
+                                        color: #45a636;
+                                    }
+                                    
+                                    .textEditorClass {
+                                        background: #ffffffff;
+                                    }
+                                    /* Test */
+                                    
+                                    .graph-nodes-rightclick-menu {
+                                        display: none;
+                                        z-index: 1000;
+                                        position: absolute;
+                                        overflow: hidden;
+                                        border: 1px solid #CCC;
+                                        white-space: nowrap;
+                                        font-family: sans-serif;
+                                        background: #FFF;
+                                        color: #333;
+                                        border-radius: 5px;
+                                        padding: 0;
+                                    }
+                                    /* Each of the items in the list */
+                                    
+                                    .graph-nodes-rightclick-menu li {
+                                        padding: 8px 12px;
+                                        cursor: pointer;
+                                        list-style-type: none;
+                                        transition: all .3s ease;
+                                        user-select: none;
+                                    }
+                                    
+                                    .graph-nodes-rightclick-menu li:hover {
+                                        background-color: #DEF;
+                                    }
+                                    
+                                    .hidden {
+                                        display: none;
+                                    }
+                                    
+                                    #fileBrowserTable.dataTable td {
+                                        padding: 3px 10px;
+                                        width: 1px;
+                                        white-space: nowrap;
+                                    }
+                                    
+                                    .progress-custom {
+                                        display: table;
+                                        width: 100%;
+                                        margin-bottom: 20px;
+                                        /*optionally same aside margin bottom of progress class*/
+                                    }
+                                    
+                                    .progress-custom .progress {
+                                        margin-bottom: 0;
+                                        display: table-cell;
+                                        vertical-align: middle;
+                                    }
+                                    
+                                    .progress-custom .progress-title {
+                                        display: table-cell;
+                                        vertical-align: middle;
+                                        /*width: 1%;
     padding: 0 4px;
     /*optionally*/
+                                    }
+                                    /*
+.floatingModal {
+    position: relative;
 }
+
+.floatingModal-dialog {
+    position: fixed;
+    width: 100%;
+    margin: 0;
+    padding: 10px;
+}
+*/
+                                    /* SCREENSAVER FADE IN*/
+                                    
+                                    .fade-in {
+                                        z-index: 1000;
+                                        position: absolute;
+                                        animation: fadeIn ease 10s;
+                                        -webkit-animation: fadeIn ease 10s;
+                                        -moz-animation: fadeIn ease 10s;
+                                        -o-animation: fadeIn ease 10s;
+                                        -ms-animation: fadeIn ease 10s;
+                                    }
+                                    
+                                    @keyframes fadeIn {
+                                        0% {
+                                            opacity: 0;
+                                        }
+                                        100% {
+                                            opacity: 1;
+                                        }
+                                    }
+                                    
+                                    @-moz-keyframes fadeIn {
+                                        0% {
+                                            opacity: 0;
+                                        }
+                                        100% {
+                                            opacity: 1;
+                                        }
+                                    }
+                                    
+                                    @-webkit-keyframes fadeIn {
+                                        0% {
+                                            opacity: 0;
+                                        }
+                                        100% {
+                                            opacity: 1;
+                                        }
+                                    }
+                                    
+                                    @-o-keyframes fadeIn {
+                                        0% {
+                                            opacity: 0;
+                                        }
+                                        100% {
+                                            opacity: 1;
+                                        }
+                                    }
+                                    
+                                    @-ms-keyframes fadeIn {
+                                        0% {
+                                            opacity: 0;
+                                        }
+                                        100% {
+                                            opacity: 1;
+                                        }

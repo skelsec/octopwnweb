@@ -4,7 +4,7 @@ import asyncio
 import traceback
 from pyodide import to_js, create_proxy
 
-from octopwn.octopwn import OctoPwnInteractive
+from octopwn.core import OctoPwn
 from octopwn.common.screenhandler import ScreenHandlerBase
 
 octopwnApp = None
@@ -21,7 +21,7 @@ def gettb4exc(exc):
 class ScreenHandlerGoldenLayout:
 	def __init__(self):
 		self.multi_window_support = True
-		self.octopwn = None
+		self.octopwn:OctoPwn = None
 		self.targetstable_id = 'targetTable'
 		self.proxytable_id = 'proxyTable'
 		self.credentialtable_id = 'credentialTable'
@@ -103,20 +103,24 @@ class ScreenHandlerGoldenLayout:
 			)
 			return True, None
 		except Exception as e:
+			print(e)
 			return None, e
 
-	async def __refresh_targets(self):
+	async def __refresh_targets(self, force = False):
 		await asyncio.sleep(1)
-		js.RefreshDataTable('#' + self.targetstable_id)
-		#js.ClearDataTable('#' + self.targetstable_id)
-		#for tid in self.octopwn.targets:
-		#	await self.target_added(tid, self.octopwn.targets[tid])
+		if force is False:
+			js.RefreshDataTable('#' + self.targetstable_id)
+		else:
+			js.ClearDataTable('#' + self.targetstable_id)
+			for tid in self.octopwn.targets:
+				await self.target_added(tid, self.octopwn.targets[tid])
+			js.RefreshDataTable('#' + self.targetstable_id)
 		self.targetrefresh_task = None
 
-	async def refresh_targets(self):
+	async def refresh_targets(self, force=False):
 		try:
 			if self.targetrefresh_task is None:
-				self.targetrefresh_task = asyncio.create_task(self.__refresh_targets())	
+				self.targetrefresh_task = asyncio.create_task(self.__refresh_targets(force))	
 			return True, None
 		except Exception as e:
 			print(e)
@@ -283,7 +287,7 @@ async def start():
 				with open(filename, 'rb') as f:
 					a = 1
 				js.loadingScreenMessage("It seems there is already a session file here. Trying to load it!")
-				octopwnApp = OctoPwnInteractive.load(filename, screen, work_dir = '/static/', periodic_save = True)
+				octopwnApp = OctoPwn.load(filename, screen, work_dir = '/static/', periodic_save = True)
 				js.loadingScreenMessage("Session restore ok!")
 				newsession = False
 				break
@@ -291,7 +295,7 @@ async def start():
 				js.loadingScreenMessage("Loading session file failed! Reason: %s" % str(e))
 		else:
 			js.loadingScreenMessage("Either no session file or it is corrupt, let the past die kill it if you have to...")
-			octopwnApp = OctoPwnInteractive(screen, work_dir = '/static/', periodic_save = True)
+			octopwnApp = OctoPwn(screen, work_dir = '/static/', periodic_save = True)
 
 		apprunner, err = await octopwnApp.run()
 		if err is not None:

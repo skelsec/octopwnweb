@@ -95,6 +95,7 @@ function FSEntry(fstablename, name, fullpath, root, ext, isdir, size, creationda
     this._accessdate = accessdate;
     this._mountpoint = mountpoint;
     this._readonly = readonly;
+    this._info = [null, null];
 
     this.htmlEncode = function(str) {
         return String(str).replace(/[^\w. ]/gi, function(c) {
@@ -166,6 +167,14 @@ function FSEntry(fstablename, name, fullpath, root, ext, isdir, size, creationda
     this.readonly = function() {
         return this._readonly;
     }
+
+    this.setinfo = function(title, data) {
+        this._info = [title, data];
+    }
+
+    this.info = function() {
+        return this._info
+    }
 }
 
 function BrowserFSFileSystem(name) {
@@ -220,7 +229,6 @@ function BrowserFSFileSystem(name) {
             if (typeof files == "undefined") {
                 // empty or error
             }
-            console.log(files);
             for (const file of files) {
                 try {
                     let fullpath = '';
@@ -439,16 +447,9 @@ function FileBrowser(tablename) {
             fs = this.fileSystems[path];
             data = await fs.changeDirectory('/');
         } else {
-            console.log('CD path: ' + path);
-            console.log(this.fileSystems);
             if (path.substring(0, 2) == '//') {
                 path = path.substring(1, path.length);
             }
-            // if (path.charAt(path.length - 1) != '/' && path != '/') {
-            //     path = path + '/';
-            // }
-
-            console.log('CD path2: ' + path);
             mountpoint = path.substring(1); //path.slice(1, path.slice(1, path.length).indexOf('/') + 1);
             if (mountpoint.indexOf('/') != -1) {
                 mountpoint = mountpoint.substring(0, mountpoint.indexOf('/'));
@@ -457,9 +458,6 @@ function FileBrowser(tablename) {
             if (path == '') path = '/';
             //path = path.slice(path.indexOf('/'), path.length);
             fs = this.fileSystems[mountpoint];
-            console.log('mountpoint: ' + mountpoint);
-            console.log(path);
-
             data = await fs.changeDirectory(path);
         }
 
@@ -532,6 +530,47 @@ function FileBrowser(tablename) {
         }
     }
 
+    this.showInfoModal = function(fsentry) {
+        $(`<div class="modal fade floatingModal" id="showFileBrowserInfoModal" tabindex="-1" role="dialog" aria-hidden="true" data-bs-backdrop="static">
+            <div class="modal-dialog modal-large floatingModal-dialog">
+                <div class="modal-content">
+                    <!-- Modal Header -->
+                    <div class="modal-header">
+                        <h4 class="modal-title">Info</h4>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+        
+                    <div class="modal-body">
+                        <div>
+                            <span>${fsentry.fullpath()}</span>
+                        </div>
+                        <div>
+                            ${fsentry.info()}
+                        </div>
+                        <!-- Modal Footer -->
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-primary" data-bs-dismiss="modal" id="showFileBrowserInfoModalOKButton">OK</button>
+                        </div>
+                        <!-- End Modal Footer -->
+                    </div>
+                    <!-- End modal body div -->
+                </div>
+                <!-- End modal content div -->
+            </div>
+            <!-- End modal dialog div -->
+        </div>
+        <!-- End modal div -->`).appendTo("body").finish();
+        $('#showFileBrowserInfoModalOKButton').click(function() {
+            $('#showFileBrowserInfoModal').modal('show');
+            const elements = document.getElementsByClassName('floatingModal');
+            while (elements.length > 0) {
+                elements[0].parentNode.removeChild(elements[0]);
+            }
+        });
+        $('#showFileBrowserInfoModal').modal('show');
+    }
+
+
 
     var options = {
         "fileSystem": this,
@@ -600,6 +639,11 @@ function FileBrowser(tablename) {
                     }
                     await fb.refresh();
                 }
+                if (event.originalEvent.path[1].attributes[0].value == 'fsInfoSpan') {
+                    let fb = FILEBROWSER_LOOKUP[tablename];
+                    fb.showInfoModal(aData);
+
+                }
             });
         },
         "columns": [
@@ -617,6 +661,9 @@ function FileBrowser(tablename) {
                     let result = '';
                     if (!data.readonly()) {
                         result += `<span name="fsDeleteSpan" title="Delete"><i class='fas fa-trash'></i>&nbsp;</span>`;
+                    }
+                    if (data.info()[0] != null) {
+                        result += `<span name="fsInfoSpan" title="Info"><i class='fas fa-info'></i>&nbsp;</span>`;
                     }
                     return result;
                 }

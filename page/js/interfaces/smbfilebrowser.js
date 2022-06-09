@@ -18,6 +18,9 @@ function SMBFileSystem(name, client) {
     this.fstablename = undefined; // will be defined upon mount
 
     this.changeDirectory = async function(path) {
+        if (path == '/' && this.client.logon_ok == false) {
+            await this.client.do_login();
+        }
         this.currentPath = path;
         let entries = await this.listDirectory(path);
         return entries
@@ -47,7 +50,6 @@ function SMBFileSystem(name, client) {
         let pathelements = path.split('\\');
         let prevpath = pathelements.slice(0, pathelements.length - 2).join('\\');
         results.push(new FSEntry(this.fstablename, '..', prevpath, prevpath, '', true, 0, new Date(), new Date(), new Date(), true, this.driver));
-        console.log(path);
         let resProxy = await this.client.listDirectory(path);
         let res = resProxy.toJs();
         if (res[1] != undefined) {

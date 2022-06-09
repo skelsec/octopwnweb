@@ -11,9 +11,10 @@ var loadSessionData = null;
 function addNewClientWindow(cid, cliname, description, client) {
     ///https://github.com/golden-layout/golden-layout/issues/30
     var windowtype = 'client';
+    console.log(cliname);
     if (cliname.search('NOTES') != -1) windowtype = 'notes';
-    if (cliname.search('SMB') != -1) windowtype = 'smb';
-    if (cliname.search('LDAP') != -1) windowtype = 'ldap';
+    if (cliname.search('SMB') == 1) windowtype = 'smb';
+    if (cliname.search('LDAP') == 1) windowtype = 'ldap';
     var newItemConfig = {
         id: 'client-tab-' + cid,
         title: cliname,
@@ -285,6 +286,7 @@ function AddDataTableEntryP5(tableid, p1, p2, p3, p4, p5) {
     ]).draw();
 }
 
+// no draw here!!!!! (target refresh times...)
 function AddDataTableEntryP6(tableid, p1, p2, p3, p4, p5, p6) {
     var table = $(tableid).DataTable()
     table.row.add([
@@ -1003,3 +1005,39 @@ async function addProxyChain() {
     $('#createProxyChainModal').modal('hide');
     removeClass('createProxyChainModalClass');
 }
+
+/*
+function addScreenSaver() {
+    $(` <div id="screenSaver" class="fade-in">
+            <img src="../img/yesman2.jpg">
+        </div>`).appendTo("body").finish();
+}
+
+
+(function() {
+    const interval = 1000;
+    const timeout = 5;
+    let idleCounter = 0;
+    window.onload = document.onmousemove = document.onkeypress = function() {
+        idleCounter = 0;
+        let test = document.getElementById("screenSaver");
+        if (test != null) {
+            test.remove();
+            window.setInterval(function() {
+                if (++idleCounter >= timeout) {
+                    let test = document.getElementById("screenSaver");
+                    if (test == null) addScreenSaver();
+                    idleCounter = 0;
+                }
+            }, interval);
+        }
+    };
+    window.setInterval(function() {
+        if (++idleCounter >= timeout) {
+            let test = document.getElementById("screenSaver");
+            if (test == null) addScreenSaver();
+            idleCounter = 0;
+        }
+    }, interval);
+})();
+*/
