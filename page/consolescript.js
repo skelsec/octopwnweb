@@ -38,6 +38,11 @@ const loadPackages = (pyodide) => {
             //document.getElementById("statusButton").value = "RUNNING OK";
 
             loadingScreenMessage('Setting up JS<==>Py proxy functions...');
+            // defining global functions...
+            pyodideGetGlobal = (name) => {
+                return pyodide.globals.get(name);
+            }
+
             runCmd = async(command, clientid) => {
                 let app = pyodide.globals.get('octopwnApp');
                 app.input_handler(command, clientid);

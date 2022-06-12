@@ -6,12 +6,18 @@ from pyodide import to_js, create_proxy
 
 from octopwn.core import OctoPwn
 from octopwn.common.screenhandler import ScreenHandlerBase
+from octopwn.utils.extras.reghelper import RegHelper
 
 octopwnApp = None
 
 class Dummy:
 	def __init__(self):
 		self.completer = None
+
+def createRegFileBrowser(filename):
+	res = RegHelper(filename)
+	return res
+
 
 def gettb4exc(exc):
 	# helping javascript to get the string representation of the traceback 

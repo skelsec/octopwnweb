@@ -95,7 +95,16 @@ function FSEntry(fstablename, name, fullpath, root, ext, isdir, size, creationda
     this._accessdate = accessdate;
     this._mountpoint = mountpoint;
     this._readonly = readonly;
-    this._info = [null, null];
+    this._info = [null, null, []];
+    this._mountable = false;
+
+    this.setmountable = function() {
+        this._mountable = true;
+    }
+
+    this.mountable = function() {
+        return this._mountable;
+    }
 
     this.htmlEncode = function(str) {
         return String(str).replace(/[^\w. ]/gi, function(c) {
@@ -168,12 +177,20 @@ function FSEntry(fstablename, name, fullpath, root, ext, isdir, size, creationda
         return this._readonly;
     }
 
-    this.setinfo = function(title, data) {
-        this._info = [title, data];
+    this.setinfo = function(title, data, tablenames = []) {
+        this._info = [title, data, tablenames];
     }
 
-    this.info = function() {
-        return this._info
+    this.infotitle = function() {
+        return this._info[0];
+    }
+
+    this.infohtml = function() {
+        return this._info[1];
+    }
+
+    this.infotablenames = function() {
+        return this._info[2];
     }
 }
 
@@ -241,7 +258,11 @@ function BrowserFSFileSystem(name) {
                         results.push(new FSEntry(fstablename, file, fullpath, path, '', true, 0, stat.ctime, stat.mtime, stat.atime, false, driver));
 
                     } else {
-                        results.push(new FSEntry(fstablename, file, fullpath, path, getext(file), false, stat.size, stat.ctime, stat.mtime, stat.atime, false, driver));
+                        let res = new FSEntry(fstablename, file, fullpath, path, getext(file), false, stat.size, stat.ctime, stat.mtime, stat.atime, false, driver)
+                        results.push(res);
+                        if (file.toLowerCase().endsWith('.reg')) {
+                            res.setmountable();
+                        }
 
                     }
                 } catch (e) {
@@ -422,8 +443,8 @@ function FileBrowser(tablename) {
                 table.fnAddData(fe);
             }
             this.currentPath = '/';
-            let curpathel = document.getElementById(`fbcurrentPath-${this.tablename}-1`);
-            curpathel.innerText = this.currentPath;
+            let curpathel = document.getElementById(`fbcurrentPath-${this.tablename}`);
+            curpathel.value = this.currentPath;
         } else {
             if (path == null || path == undefined || path == '') path = this.currentPath;
             await this.changeDirectory(path)
@@ -431,7 +452,7 @@ function FileBrowser(tablename) {
     }
 
     this.changeDirectory = async function(path) {
-        if (path == undefined || path == '/') {
+        if (path == null || path == undefined || path == '/' || path == '') {
             await this.refresh('/');
             return;
         }
@@ -471,8 +492,8 @@ function FileBrowser(tablename) {
         } else curpath = '/' + mountpoint + '/' + path.substring(1);
         this.currentPath = curpath;
 
-        let curpathel = document.getElementById(`fbcurrentPath-${this.tablename}-1`);
-        curpathel.innerText = this.currentPath;
+        let curpathel = document.getElementById(`fbcurrentPath-${this.tablename}`);
+        curpathel.value = this.currentPath;
 
         data.forEach(function(value) {
             table.fnAddData(value);
@@ -531,13 +552,13 @@ function FileBrowser(tablename) {
     }
 
     this.showInfoModal = function(fsentry) {
-        $(`<div class="modal fade floatingModal" id="showFileBrowserInfoModal" tabindex="-1" role="dialog" aria-hidden="true" data-bs-backdrop="static">
-            <div class="modal-dialog modal-large floatingModal-dialog">
+        $(`<div class="modal fade fileBrowserInfoModalClass" id="showFileBrowserInfoModal" tabindex="-1" role="dialog" aria-hidden="true" data-bs-backdrop="static">
+            <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <!-- Modal Header -->
                     <div class="modal-header">
                         <h4 class="modal-title">Info</h4>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" id="showFileBrowserInfoModalOKButton"></button>
                     </div>
         
                     <div class="modal-body">
@@ -545,13 +566,8 @@ function FileBrowser(tablename) {
                             <span>${fsentry.fullpath()}</span>
                         </div>
                         <div>
-                            ${fsentry.info()}
+                            ${fsentry.infohtml()}
                         </div>
-                        <!-- Modal Footer -->
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-primary" data-bs-dismiss="modal" id="showFileBrowserInfoModalOKButton">OK</button>
-                        </div>
-                        <!-- End Modal Footer -->
                     </div>
                     <!-- End modal body div -->
                 </div>
@@ -560,13 +576,26 @@ function FileBrowser(tablename) {
             <!-- End modal dialog div -->
         </div>
         <!-- End modal div -->`).appendTo("body").finish();
+        let tablenames = fsentry.infotablenames();
+        if (tablenames != null && tablenames != undefined) {
+            for (let i = 0; i < tablenames.length; i++) {
+                $(`#${tablenames[i]}`).DataTable();
+            }
+        }
+
         $('#showFileBrowserInfoModalOKButton').click(function() {
             $('#showFileBrowserInfoModal').modal('show');
-            const elements = document.getElementsByClassName('floatingModal');
+            if (tablenames != null && tablenames != undefined) {
+                for (let i = 0; i < tablenames.length; i++) {
+                    $(`#${tablenames[i]}`).DataTable().destroy();
+                }
+            }
+            const elements = document.getElementsByClassName('fileBrowserInfoModalClass');
             while (elements.length > 0) {
                 elements[0].parentNode.removeChild(elements[0]);
             }
         });
+
         $('#showFileBrowserInfoModal').modal('show');
     }
 
@@ -631,7 +660,7 @@ function FileBrowser(tablename) {
             $('td:eq(4)', nRow, aData).bind('click', async function(event) {
                 let fb = FILEBROWSER_LOOKUP[tablename];
                 let path = aData.fullpath();
-                if (event.originalEvent.path[1].attributes[0].value == 'fsDeleteSpan') {
+                if (event.originalEvent.path[0].attributes[0].value == 'fsDeleteAction') {
                     if (aData.isdir()) {
                         await fb.deleteDirectory(path);
                     } else {
@@ -639,11 +668,19 @@ function FileBrowser(tablename) {
                     }
                     await fb.refresh();
                 }
-                if (event.originalEvent.path[1].attributes[0].value == 'fsInfoSpan') {
+                if (event.originalEvent.path[0].attributes[0].value == 'fsInfoAction') {
                     let fb = FILEBROWSER_LOOKUP[tablename];
                     fb.showInfoModal(aData);
+                }
+                if (event.originalEvent.path[0].attributes[0].value == 'fsMountAction') {
+                    if (aData.fullpath().toLowerCase().endsWith('.reg')) {
+                        createRegistryFileSystem(aData.fullpath());
+                    } else {
+                        console.log('Unknown mount type! ' + aData.fullpath());
+                    }
 
                 }
+
             });
         },
         "columns": [
@@ -658,13 +695,17 @@ function FileBrowser(tablename) {
                 "sortable": true,
                 "render": function(data, type, row, meta) {
                     if (data._name == '..') return '';
-                    let result = '';
+                    let result = '<ul class="list-inline">';
                     if (!data.readonly()) {
-                        result += `<span name="fsDeleteSpan" title="Delete"><i class='fas fa-trash'></i>&nbsp;</span>`;
+                        result += '<i name="fsDeleteAction" class="fas fa-trash"></i>&nbsp;';
                     }
-                    if (data.info()[0] != null) {
-                        result += `<span name="fsInfoSpan" title="Info"><i class='fas fa-info'></i>&nbsp;</span>`;
+                    if (data.infotitle() != null) {
+                        result += '<i name="fsInfoAction" class="fas fa-info"></i>&nbsp;';
                     }
+                    if (data.mountable()) {
+                        result += '<i name="fsMountAction" class="fas fa-folder"></i>&nbsp;';
+                    }
+                    result += '</ul>';
                     return result;
                 }
             },
@@ -676,25 +717,37 @@ function FileBrowser(tablename) {
             try {
                 $('div.toolbar').html(`
                 <div style="margin-bottom:-35px">
-                    <label id="fbcurrentPath-${tablename}" class="control-label">Current Path</label>
-                    <label id="fbcurrentPath-${tablename}-1" class="control-label"></label>
-                    <div class="col-sm-8">
-                        <span id="fileUploadButton-${tablename}" title="Upload">
-                            <i class="fas fa-upload"></i>
-                        </span>
-                        <input type="file" id="fileUploadButtonElem-${tablename}" multiple accept="*" onchange="" hidden>
-                        <span id="createDirectoryButton" title="Create Dir">
-                            <i class="fas fa-folder-plus"></i>
-                        </span>
-                        <input class="quickfilter" type="text" id="createFolder-${tablename}" placeholder="dirname">
-                        
-                        
+                    <div class="container">
+                        <div class="row">
+                            <div class="col-sm">
+                                <span id="ChangeDirectoryButton-${tablename}" title="CD">
+                                    <i class="fas fa-angle-right"></i>
+                                </span>
+                                <input class="quickfilter" type="text" id="fbcurrentPath-${tablename}" size="50">
+                            </div>
+                        </div>
+                    
+                        <div class="col-sm-8">
+                            <span id="fileUploadButton-${tablename}" title="Upload">
+                                <i class="fas fa-upload"></i>
+                            </span>
+                            <input type="file" id="fileUploadButtonElem-${tablename}" multiple accept="*" onchange="" hidden>
+                            <span id="createDirectoryButton-${tablename}" title="Create Dir">
+                                <i class="fas fa-folder-plus"></i>
+                            </span>
+                            <input class="quickfilter" type="text" id="createFolder-${tablename}" placeholder="new dirname">
+                        </div>
                     </div>
                 </div>            
                 `);
-                $("#createDirectoryButton").click(function() {
+                $(`#createDirectoryButton-${tablename}`).click(function() {
                     let fb = FILEBROWSER_LOOKUP[tablename];
                     fb.createDirectoryHTML();
+                });
+                $(`#ChangeDirectoryButton-${tablename}`).click(function() {
+                    let fb = FILEBROWSER_LOOKUP[tablename];
+                    let path = document.getElementById(`fbcurrentPath-${tablename}`).value;
+                    fb.changeDirectory(path);
                 });
 
                 $(`#fileUploadButton-${tablename}`).click(function() {

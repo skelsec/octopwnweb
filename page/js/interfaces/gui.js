@@ -11,7 +11,6 @@ var loadSessionData = null;
 function addNewClientWindow(cid, cliname, description, client) {
     ///https://github.com/golden-layout/golden-layout/issues/30
     var windowtype = 'client';
-    console.log(cliname);
     if (cliname.search('NOTES') != -1) windowtype = 'notes';
     if (cliname.search('SMB') == 1) windowtype = 'smb';
     if (cliname.search('LDAP') == 1) windowtype = 'ldap';

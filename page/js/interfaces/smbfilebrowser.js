@@ -1,8 +1,6 @@
 function createSMBFileSystem(cid, client) {
     let fb = FILEBROWSER_LOOKUP['fileBrowserTable'];
-    console.log(fb);
     let smbfs = new SMBFileSystem(`smb-${cid}`, client);
-    console.log(`smb-${cid}`);
     fb.mount(smbfs);
 }
 

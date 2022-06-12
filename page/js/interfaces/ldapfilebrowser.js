@@ -56,12 +56,27 @@ function LDAPFileSystem(name, client) {
             let fullpath = entry;
             let name = entry.substring(0, entry.length - path.length - 1);
             let attrs = res[0].get(entry).get('attributes');
-            infohtml = '';
+            infohtml = `<table id="ldapAttrTable" class="hover row-border order-column compact" cellspacing="0" width="100%">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Type</th>
+                    <th>Value</th>
+                </tr>
+            </thead>
+            <tbody>`;
             for (const key of attrs.keys()) {
-                infohtml += `<div><span>${key}</span><span>${attrs.get(key)}</span></div>`;
+                infohtml += `
+                <tr>
+                    <td>${key}</td>
+                    <td>${attrs.get(key)}</td>
+                    <td></td>
+                </tr>
+            `
+                    //infohtml += `<div><span>${key}</span><span>${attrs.get(key)}</span></div>`;
             }
             fsentry = new FSEntry(this.fstablename, name, fullpath, path, '', true, 0, new Date(), new Date(), new Date(), true, this.driver);
-            fsentry.setinfo('HELLO', infohtml);
+            fsentry.setinfo('HELLO', infohtml, ['ldapAttrTable']);
             results.push(fsentry);
 
         }

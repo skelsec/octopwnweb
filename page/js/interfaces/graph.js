@@ -362,7 +362,6 @@ function updateGraphCanvas(clientid, graphid, graphdata_json) {
             var nodeid = network.getNodeAt(props.pointer.DOM);
             if (nodeid == undefined) return;
             props.event.preventDefault();
-            console.log(nodeid);
             $(`<div class='graph-nodes-rightclick-menu'>
                     <ul>
                         <li onclick="toggleNodeProperty(${clientid}, ${graphid}, '${nodeid}', 'HVT')">HVT</li>
@@ -449,15 +448,9 @@ async function searchNodes(clientid, graphid, direction) {
 
 async function toggleNodeProperty(clientid, graphid, sid, propertyname) {
     // TODO: not working correctly!
-    console.log(clientid);
-    console.log(graphid);
-    console.log(sid);
-    console.log(propertyname);
-
     var client = OCTOPWN_CLIENT_LOOKUP[clientid];
     var network = graphs_lookup[`graphcanvas-${clientid}-${graphid}`];
     var nodeObj = network.body.data.nodes._data[sid];
-    console.log(nodeObj);
     if (propertyname == 'OWNED') {
         if (nodeObj.owned == null || nodeObj.owned == undefined || nodeObj.owned == false) {
             await client.do_graphsetowned(sid, false);
