@@ -1,4 +1,4 @@
-![Twitter](https://img.shields.io/twitter/follow/skelsec?label=skelsec&style=social)](https://twitter.com/intent/follow?screen_name=skelsec)
+![[Twitter](https://img.shields.io/twitter/follow/skelsec?label=skelsec&style=social)](https://twitter.com/intent/follow?screen_name=skelsec)
 
 :triangular_flag_on_post: This is the public repository of OctoPwnWeb, for latest version and updates please consider supporting us through https://porchetta.industries/
 
