@@ -57,6 +57,8 @@ const loadPackages = (pyodide) => {
 
             octopwnAddCredential = async(username_with_domain, secret, secrettype, certfile, keyfile) => {
                 let app = pyodide.globals.get('octopwnApp');
+                if (certfile == '') certfile = null;
+                if (keyfile == '') keyfile = null;
                 await app.do_addcred(username_with_domain, secret, secrettype, certfile, keyfile);
                 app.destroy();
             }
