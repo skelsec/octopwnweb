@@ -4,7 +4,8 @@
 
 # OctoPwnWeb
 Internal pentest framework running in you browser via WebAssembly, powered by Pyodide.  
-For more information I have made a talk on Area41 conference introducing this [tool](https://youtu.be/jStdrDHTmD4).
+For more information I have made a talk on Area41 conference introducing this [tool](https://youtu.be/jStdrDHTmD4)  
+Official release hosted on Amazon S3 can be accessed [here](http://octopwn.porchetta.industries/)
 
 ## :triangular_flag_on_post: Sponsors
 
@@ -28,3 +29,8 @@ To get the full octopwn experience you'll need this repository and the [WSNET](h
 
 ### Start WSNET
 Follow instructions [here](https://github.com/skelsec/wsnet)
+
+### Good to know
+When loading OctoPwnWeb via HTTP then the WSNET needs to be using WS, the plaintext WebScokets protocol.  
+When loading OctoPwnWeb via HTTPS then the WSNET needs to be using WSS, the SSL wrapped WebScokets protocol.  
+If things not working, keep and eye on the developer console this software is still in beta.
